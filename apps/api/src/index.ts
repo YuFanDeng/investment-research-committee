@@ -31,7 +31,9 @@ app.post('/research', zValidator('json', ResearchRequestSchema), async (context)
 
   return context.json({
     ticker: result.ticker,
+    companyName: result.companyName,
     status: result.status,
+    fundamentals: result.fundamentals,
     memo: result.memo,
     sources: result.sources,
     errors: result.errors,
