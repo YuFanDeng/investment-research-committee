@@ -10,7 +10,10 @@ const contactEmail = process.env.SEC_CONTACT_EMAIL;
 if (!contactEmail) throw new Error('SEC_CONTACT_EMAIL must be configured.');
 
 const app = new Hono();
-const researchGraph = createResearchGraph({ secContactEmail: contactEmail });
+const researchGraph = createResearchGraph({
+  secContactEmail: contactEmail,
+  modelEnvironment: { ...process.env },
+});
 
 app.use(
   '/*',

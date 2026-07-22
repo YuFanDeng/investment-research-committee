@@ -7,9 +7,11 @@
     "build": "pnpm -r build",
     "check": "pnpm -r check",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "test": "vitest run"
   },
   "devDependencies": {
-    "prettier": "^3.5.3"
+    "prettier": "^3.5.3",
+    "vitest": "^3.2.4"
   }
 }

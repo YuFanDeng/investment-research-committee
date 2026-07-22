@@ -125,6 +125,7 @@ function MemoView({ result }: { result: ResearchResponse }) {
           <span className="status">{result.status}</span>
         </div>
         <h2>{result.ticker}</h2>
+        {result.errors.length ? <p className="warning">{result.errors.join(' ')}</p> : null}
         <p>{memo.companySnapshot}</p>
         <h3>Financial highlights</h3>
         <ul>

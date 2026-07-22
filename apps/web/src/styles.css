@@ -192,6 +192,14 @@ button:disabled {
   color: #ffb5a5;
   margin-top: 1rem;
 }
+.warning {
+  background: #453d22;
+  border: 1px solid #746438;
+  border-radius: 0.5rem;
+  color: #f1d99a;
+  font-size: 0.85rem;
+  padding: 0.75rem;
+}
 @media (max-width: 720px) {
   main {
     width: min(100% - 2rem, 1120px);
