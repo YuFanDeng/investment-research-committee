@@ -2,13 +2,21 @@ import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 
 import {
   ResearchMemoSchema,
+  AnalystReportSchema,
+  type AnalystReport,
+  type AnalystRole,
   type Fundamentals,
   type ResearchMemo,
   type ResearchRequest,
   type Source,
 } from './schemas.js';
 import { createResearchModel, getModelSettings } from './model.js';
-import { buildMemoWriterMessages, type MemoWriterMessage } from './prompts/memo-writer.js';
+import {
+  buildAnalystMessages,
+  buildChairMessages,
+  buildFallbackAnalystReport,
+  type CommitteeMessage,
+} from './prompts/committee.js';
 import { SecEdgarClient, SecEdgarError, type SecFundamentals } from './tools/sec-edgar.js';
 
 const ResearchState = Annotation.Root({
@@ -17,6 +25,10 @@ const ResearchState = Annotation.Root({
   status: Annotation<'pending' | 'researching' | 'complete' | 'failed'>,
   fundamentals: Annotation<Fundamentals | undefined>,
   memo: Annotation<ResearchMemo | undefined>,
+  analystReports: Annotation<AnalystReport[]>({
+    reducer: (current, update) => [...current, ...update],
+    default: () => [],
+  }),
   sources: Annotation<Source[]>({
     reducer: (current, update) => [...current, ...update],
     default: () => [],
@@ -59,22 +71,60 @@ export function buildDeterministicMemo(state: typeof ResearchState.State): Resea
   };
 }
 
-type MemoModelInvoker = (
-  messages: MemoWriterMessage[],
+type ModelInvoker = (
+  messages: CommitteeMessage[],
   environment: ModelEnvironment,
 ) => Promise<unknown>;
 
-async function invokeOllamaMemo(messages: MemoWriterMessage[], modelEnvironment: ModelEnvironment) {
+async function invokeOllamaModel(messages: CommitteeMessage[], modelEnvironment: ModelEnvironment) {
+  const model = createResearchModel(getModelSettings(modelEnvironment)).withStructuredOutput(
+    AnalystReportSchema,
+  );
+  return model.invoke(messages);
+}
+
+async function invokeOllamaChair(messages: CommitteeMessage[], modelEnvironment: ModelEnvironment) {
   const model = createResearchModel(getModelSettings(modelEnvironment)).withStructuredOutput(
     ResearchMemoSchema,
   );
   return model.invoke(messages);
 }
 
-async function writeLlmMemo(
+async function runAnalyst(
+  state: typeof ResearchState.State,
+  role: AnalystRole,
+  modelEnvironment: ModelEnvironment,
+  invokeAnalystModel: ModelInvoker,
+) {
+  const fundamentals = state.fundamentals;
+
+  if (!fundamentals) {
+    return { status: 'failed' as const, errors: ['No fundamentals were available.'] };
+  }
+
+  const evidence = {
+    ticker: state.ticker,
+    companyName: state.companyName,
+    fundamentals,
+    sources: state.sources,
+  };
+
+  try {
+    const report = await invokeAnalystModel(buildAnalystMessages(role, evidence), modelEnvironment);
+    return { analystReports: [AnalystReportSchema.parse(report)] };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : 'Unknown Ollama error.';
+    return {
+      analystReports: [buildFallbackAnalystReport(role, evidence)],
+      errors: [`${role} analyst fallback used: ${reason}`],
+    };
+  }
+}
+
+async function writeChairMemo(
   state: typeof ResearchState.State,
   modelEnvironment: ModelEnvironment,
-  invokeMemoModel: MemoModelInvoker,
+  invokeChairModel: ModelInvoker,
 ) {
   const fundamentals = state.fundamentals;
 
@@ -83,12 +133,13 @@ async function writeLlmMemo(
   }
 
   try {
-    const memo = await invokeMemoModel(
-      buildMemoWriterMessages({
+    const memo = await invokeChairModel(
+      buildChairMessages({
         ticker: state.ticker,
         companyName: state.companyName,
         fundamentals,
         sources: state.sources,
+        analystReports: state.analystReports,
       }),
       modelEnvironment,
     );
@@ -101,7 +152,7 @@ async function writeLlmMemo(
       status: 'complete' as const,
       memo: buildDeterministicMemo(state),
       errors: [
-        `Ollama memo generation was unavailable; returned deterministic SEC facts instead. ${reason}`,
+        `Committee chair synthesis was unavailable; returned deterministic SEC facts instead. ${reason}`,
       ],
     };
   }
@@ -111,10 +162,12 @@ export function createResearchGraph(options: {
   secContactEmail: string;
   modelEnvironment: ModelEnvironment;
   secClient?: Pick<SecEdgarClient, 'getFundamentals'>;
-  invokeMemoModel?: MemoModelInvoker;
+  invokeAnalystModel?: ModelInvoker;
+  invokeMemoModel?: ModelInvoker;
 }) {
   const secEdgar = options.secClient ?? new SecEdgarClient(options.secContactEmail);
-  const invokeMemoModel = options.invokeMemoModel ?? invokeOllamaMemo;
+  const invokeAnalystModel = options.invokeAnalystModel ?? invokeOllamaModel;
+  const invokeChairModel = options.invokeMemoModel ?? invokeOllamaChair;
 
   async function fetchSecFundamentals(state: typeof ResearchState.State) {
     try {
@@ -134,13 +187,27 @@ export function createResearchGraph(options: {
   return new StateGraph(ResearchState)
     .addNode('validateTicker', validateTicker)
     .addNode('fetchSecFundamentals', fetchSecFundamentals)
-    .addNode('writeLlmMemo', (state) =>
-      writeLlmMemo(state, options.modelEnvironment, invokeMemoModel),
+    .addNode('fundamentalsAnalyst', (state) =>
+      runAnalyst(state, 'fundamentals', options.modelEnvironment, invokeAnalystModel),
+    )
+    .addNode('businessQualityAnalyst', (state) =>
+      runAnalyst(state, 'business_quality', options.modelEnvironment, invokeAnalystModel),
+    )
+    .addNode('valuationAnalyst', (state) =>
+      runAnalyst(state, 'valuation', options.modelEnvironment, invokeAnalystModel),
+    )
+    .addNode('committeeChair', (state) =>
+      writeChairMemo(state, options.modelEnvironment, invokeChairModel),
     )
     .addEdge(START, 'validateTicker')
     .addEdge('validateTicker', 'fetchSecFundamentals')
-    .addEdge('fetchSecFundamentals', 'writeLlmMemo')
-    .addEdge('writeLlmMemo', END)
+    .addEdge('fetchSecFundamentals', 'fundamentalsAnalyst')
+    .addEdge('fetchSecFundamentals', 'businessQualityAnalyst')
+    .addEdge('fetchSecFundamentals', 'valuationAnalyst')
+    .addEdge('fundamentalsAnalyst', 'committeeChair')
+    .addEdge('businessQualityAnalyst', 'committeeChair')
+    .addEdge('valuationAnalyst', 'committeeChair')
+    .addEdge('committeeChair', END)
     .compile();
 }
 

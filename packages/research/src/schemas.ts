@@ -32,7 +32,20 @@ export const ResearchMemoSchema = z.object({
   disclaimer: z.string(),
 });
 
+export const AnalystRoleSchema = z.enum(['fundamentals', 'business_quality', 'valuation']);
+
+export const AnalystReportSchema = z.object({
+  role: AnalystRoleSchema,
+  thesis: z.string(),
+  supportingEvidence: z.array(z.string()),
+  concerns: z.array(z.string()),
+  confidence: z.number().min(0).max(1),
+  sourceIdsUsed: z.array(z.string()),
+});
+
 export type ResearchRequest = z.infer<typeof ResearchRequestSchema>;
 export type Source = z.infer<typeof SourceSchema>;
 export type Fundamentals = z.infer<typeof FundamentalsSchema>;
 export type ResearchMemo = z.infer<typeof ResearchMemoSchema>;
+export type AnalystRole = z.infer<typeof AnalystRoleSchema>;
+export type AnalystReport = z.infer<typeof AnalystReportSchema>;

@@ -30,7 +30,7 @@ function createTestGraph(
   });
 }
 
-describe('research graph memo node', () => {
+describe('research committee graph', () => {
   it('accepts a structured model response', async () => {
     const graph = createTestGraph(async () => ({
       companySnapshot: 'Test Company reported annual results.',
@@ -45,6 +45,11 @@ describe('research graph memo node', () => {
 
     expect(result.status).toBe('complete');
     expect(result.memo?.sourceIdsUsed).toEqual(['sec-test-source']);
+    expect(result.analystReports.map((report) => report.role).sort()).toEqual([
+      'business_quality',
+      'fundamentals',
+      'valuation',
+    ]);
   });
 
   it('returns deterministic facts when the model fails', async () => {
@@ -56,6 +61,6 @@ describe('research graph memo node', () => {
 
     expect(result.status).toBe('complete');
     expect(result.memo?.financialHighlights[0]).toContain('FY2025 revenue');
-    expect(result.errors[0]).toContain('deterministic SEC facts');
+    expect(result.errors.some((error) => error.includes('deterministic SEC facts'))).toBe(true);
   });
 });

@@ -2,6 +2,7 @@ import type { FormEvent } from 'react';
 import { useState } from 'react';
 
 import { AppShell } from './components/layout/AppShell';
+import { CommitteePanel } from './components/research/CommitteePanel';
 import { EmptyResearchState } from './components/research/EmptyResearchState';
 import { EvidencePanel } from './components/research/EvidencePanel';
 import { ResearchMemo } from './components/research/ResearchMemo';
@@ -66,6 +67,7 @@ export default function App() {
         <section className="results-layout">
           <ResearchMemo result={result} />
           <EvidencePanel sources={result.sources} />
+          <CommitteePanel reports={result.analystReports} />
         </section>
       ) : (
         <EmptyResearchState />

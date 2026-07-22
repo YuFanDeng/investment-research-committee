@@ -24,11 +24,23 @@ export type ResearchMemo = {
   disclaimer: string;
 };
 
+export type AnalystRole = 'fundamentals' | 'business_quality' | 'valuation';
+
+export type AnalystReport = {
+  role: AnalystRole;
+  thesis: string;
+  supportingEvidence: string[];
+  concerns: string[];
+  confidence: number;
+  sourceIdsUsed: string[];
+};
+
 export type ResearchResponse = {
   ticker: string;
   companyName?: string;
   status: ResearchStatus;
   fundamentals?: Fundamentals;
+  analystReports: AnalystReport[];
   memo?: ResearchMemo;
   sources: Source[];
   errors: string[];

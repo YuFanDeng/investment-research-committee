@@ -12,6 +12,7 @@ This document records the initial implementation choices for the Investment Rese
 | Agent orchestration     | LangGraph.js       | Keeps the workflow, graph state, conditional routing, critique, and later human approval in TypeScript.              |
 | Runtime validation      | Zod                | Validates untrusted runtime data and infers TypeScript types from the same schemas.                                  |
 | Primary evidence source | SEC EDGAR          | Provides authoritative U.S. company filing and financial data.                                                       |
+| Market data provider    | Massive            | Documented TypeScript-friendly API with a free end-of-day tier suitable for the valuation analyst demo.              |
 | Code formatting         | Prettier           | Keeps source files consistently readable and reduces formatting noise in reviews.                                    |
 
 ## Architecture
@@ -23,7 +24,7 @@ Hono API server
         ↓
 LangGraph.js research workflow
         ↓
-SEC EDGAR + market-data providers + LLM
+SEC EDGAR + Massive market data + LLM
 ```
 
 The frontend owns interaction and visualization. The Hono API server owns secrets and exposes research endpoints. LangGraph.js, data tools, prompts, and shared schemas remain framework-independent TypeScript modules.
@@ -74,7 +75,8 @@ These are intentionally out of scope for the first end-to-end milestone:
 - Database persistence and a durable LangGraph checkpointer.
 - Portfolio tracking and personalized recommendations.
 - Real-time market data.
-- A multi-agent committee, human-approval interrupts, and background workers.
+- Peer-comparison data beyond the initial market-data snapshot.
+- Human-approval interrupts and background workers.
 
 We will add persistence when the single research workflow works reliably, then add specialist agents and a human review checkpoint.
 
