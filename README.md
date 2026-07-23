@@ -27,7 +27,9 @@ pnpm dev
 
 Open `http://localhost:5173`. The API runs at `http://localhost:8787`.
 
-`apps/api/.env` contains the local SEC contact configuration and is ignored by Git. Copy `.env.example` when configuring a new environment.
+The root `.env` contains local API and Vite configuration and is ignored by Git. Copy `.env.example` when configuring a new environment; keep the real Massive key in this root file only.
+
+Use `pnpm dev:mock` when you want to skip the slower SEC EDGAR request while keeping live Massive market data. The normal `pnpm dev` command uses live SEC data.
 
 ## Checks
 

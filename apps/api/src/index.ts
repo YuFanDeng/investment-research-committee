@@ -1,18 +1,29 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { serve } from '@hono/node-server';
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
-import { ResearchRequestSchema, createResearchGraph } from '@investment-research/research';
+import {
+  createResearchGraph,
+  MockSecEdgarClient,
+  ResearchRequestSchema,
+} from '@investment-research/research';
+
+dotenv.config({ path: resolve(dirname(fileURLToPath(import.meta.url)), '../../../.env') });
 
 const contactEmail = process.env.SEC_CONTACT_EMAIL;
 if (!contactEmail) throw new Error('SEC_CONTACT_EMAIL must be configured.');
+
+const useMockData = process.env.USE_MOCK_DATA?.toLowerCase() === 'true';
 
 const app = new Hono();
 const researchGraph = createResearchGraph({
   secContactEmail: contactEmail,
   modelEnvironment: { ...process.env },
+  secClient: useMockData ? new MockSecEdgarClient() : undefined,
 });
 
 app.use(
@@ -34,7 +45,9 @@ app.post('/research', zValidator('json', ResearchRequestSchema), async (context)
     companyName: result.companyName,
     status: result.status,
     fundamentals: result.fundamentals,
+    marketSnapshot: result.marketSnapshot,
     analystReports: result.analystReports,
+    challengeReport: result.challengeReport,
     memo: result.memo,
     sources: result.sources,
     errors: result.errors,

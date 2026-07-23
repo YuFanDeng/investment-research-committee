@@ -4,6 +4,7 @@
   "packageManager": "pnpm@10.0.0",
   "scripts": {
     "dev": "pnpm --parallel --filter @investment-research/web --filter @investment-research/api dev",
+    "dev:mock": "node scripts/dev-mock.mjs",
     "build": "pnpm -r build",
     "check": "pnpm -r check",
     "format": "prettier --write .",

@@ -8,6 +8,8 @@ import { EvidencePanel } from './components/research/EvidencePanel';
 import { ResearchMemo } from './components/research/ResearchMemo';
 import { ResearchProgress } from './components/research/ResearchProgress';
 import { TickerSearch } from './components/research/TickerSearch';
+import { MarketSnapshotPanel } from './components/research/MarketSnapshotPanel';
+import { SkepticPanel } from './components/research/SkepticPanel';
 import { useResearch } from './hooks/use-research';
 
 export default function App() {
@@ -68,6 +70,8 @@ export default function App() {
           <ResearchMemo result={result} />
           <EvidencePanel sources={result.sources} />
           <CommitteePanel reports={result.analystReports} />
+          <MarketSnapshotPanel snapshot={result.marketSnapshot} />
+          <SkepticPanel report={result.challengeReport} />
         </section>
       ) : (
         <EmptyResearchState />

@@ -7,10 +7,16 @@ export {
   buildChairMessages,
 } from './prompts/committee.js';
 export { SecEdgarClient, SecEdgarError } from './tools/sec-edgar.js';
+export { MassiveClient, MassiveError } from './tools/massive.js';
+export { MockMassiveClient, MockSecEdgarClient } from './tools/mock-data.js';
 export {
   FundamentalsSchema,
   AnalystReportSchema,
   AnalystRoleSchema,
+  ChallengeReportSchema,
+  MarketBarSchema,
+  MarketSnapshotSchema,
+  PeerComparisonSchema,
   ResearchMemoSchema,
   ResearchRequestSchema,
   SourceSchema,
@@ -18,7 +24,11 @@ export {
 export type {
   AnalystReport,
   AnalystRole,
+  ChallengeReport,
   Fundamentals,
+  MarketBar,
+  MarketSnapshot,
+  PeerComparison,
   ResearchMemo,
   ResearchRequest,
   Source,

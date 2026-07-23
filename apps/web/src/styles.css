@@ -570,6 +570,67 @@ button:disabled {
 .analyst-columns li {
   margin: 0.35rem 0;
 }
+.market-snapshot-panel {
+  background: #141d17e8;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  grid-column: 1 / -1;
+  padding: 1.3rem;
+}
+.peer-list {
+  border-top: 1px solid var(--line);
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+}
+.peer-grid {
+  display: grid;
+  gap: 0.6rem;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 0.6rem;
+}
+.peer-item {
+  background: var(--surface-raised);
+  border: 1px solid #2e4432;
+  border-radius: 0.45rem;
+  padding: 0.7rem;
+}
+.peer-item strong {
+  color: #edf7ee;
+  display: block;
+  font-size: 0.8rem;
+}
+.peer-item span,
+.peer-item small {
+  color: var(--muted);
+  display: block;
+  font-size: 0.68rem;
+  margin-top: 0.25rem;
+}
+.peer-item small {
+  color: var(--soft);
+}
+.skeptic-panel {
+  background: #211a14e8;
+  border: 1px solid #58422d;
+  border-radius: 0.8rem;
+  grid-column: 1 / -1;
+  padding: 1.3rem;
+}
+.skeptic-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(4, 1fr);
+}
+.skeptic-section ul {
+  color: var(--soft);
+  font-size: 0.72rem;
+  line-height: 1.45;
+  margin: 0.45rem 0 0;
+  padding-left: 1rem;
+}
+.skeptic-section li {
+  margin: 0.35rem 0;
+}
 .empty-research-state {
   color: var(--muted);
   padding: 3rem 1.5rem;
@@ -654,6 +715,12 @@ button:disabled {
   }
   .committee-list {
     grid-template-columns: 1fr;
+  }
+  .peer-grid {
+    grid-template-columns: 1fr;
+  }
+  .skeptic-grid {
+    grid-template-columns: 1fr 1fr;
   }
   .memo-section-risk {
     grid-column: auto;

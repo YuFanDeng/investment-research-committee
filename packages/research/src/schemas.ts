@@ -16,6 +16,30 @@ export const SourceSchema = z.object({
   retrievedAt: z.string().datetime(),
 });
 
+export const MarketBarSchema = z.object({
+  date: z.string(),
+  close: z.number(),
+});
+
+export const PeerComparisonSchema = z.object({
+  ticker: z.string(),
+  name: z.string().optional(),
+  marketCap: z.number().optional(),
+  currency: z.string().optional(),
+});
+
+export const MarketSnapshotSchema = z.object({
+  currentPrice: z.number(),
+  previousClose: z.number().optional(),
+  historicalCloses: z.array(MarketBarSchema),
+  marketCap: z.number().optional(),
+  currency: z.string(),
+  adjusted: z.boolean(),
+  retrievedAt: z.string().datetime(),
+  sourceId: z.string(),
+  peers: z.array(PeerComparisonSchema),
+});
+
 export const FundamentalsSchema = z.object({
   fiscalYear: z.number().int(),
   revenueUsd: z.number(),
@@ -43,9 +67,23 @@ export const AnalystReportSchema = z.object({
   sourceIdsUsed: z.array(z.string()),
 });
 
+export const ChallengeReportSchema = z.object({
+  thesisWeaknesses: z.array(z.string()),
+  unsupportedClaims: z.array(z.string()),
+  missingEvidence: z.array(z.string()),
+  keyRisks: z.array(z.string()),
+  requiredRevisions: z.array(z.string()),
+  confidence: z.number().min(0).max(1),
+  sourceIdsUsed: z.array(z.string()),
+});
+
 export type ResearchRequest = z.infer<typeof ResearchRequestSchema>;
 export type Source = z.infer<typeof SourceSchema>;
+export type MarketBar = z.infer<typeof MarketBarSchema>;
+export type PeerComparison = z.infer<typeof PeerComparisonSchema>;
+export type MarketSnapshot = z.infer<typeof MarketSnapshotSchema>;
 export type Fundamentals = z.infer<typeof FundamentalsSchema>;
 export type ResearchMemo = z.infer<typeof ResearchMemoSchema>;
 export type AnalystRole = z.infer<typeof AnalystRoleSchema>;
 export type AnalystReport = z.infer<typeof AnalystReportSchema>;
+export type ChallengeReport = z.infer<typeof ChallengeReportSchema>;

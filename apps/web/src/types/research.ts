@@ -15,6 +15,25 @@ export type Fundamentals = {
   operatingCashFlowUsd: number;
 };
 
+export type MarketSnapshot = {
+  currentPrice: number;
+  previousClose?: number;
+  historicalCloses: Array<{ date: string; close: number }>;
+  marketCap?: number;
+  currency: string;
+  adjusted: boolean;
+  retrievedAt: string;
+  sourceId: string;
+  peers: PeerComparison[];
+};
+
+export type PeerComparison = {
+  ticker: string;
+  name?: string;
+  marketCap?: number;
+  currency?: string;
+};
+
 export type ResearchMemo = {
   companySnapshot: string;
   financialHighlights: string[];
@@ -35,12 +54,24 @@ export type AnalystReport = {
   sourceIdsUsed: string[];
 };
 
+export type ChallengeReport = {
+  thesisWeaknesses: string[];
+  unsupportedClaims: string[];
+  missingEvidence: string[];
+  keyRisks: string[];
+  requiredRevisions: string[];
+  confidence: number;
+  sourceIdsUsed: string[];
+};
+
 export type ResearchResponse = {
   ticker: string;
   companyName?: string;
   status: ResearchStatus;
   fundamentals?: Fundamentals;
+  marketSnapshot?: MarketSnapshot;
   analystReports: AnalystReport[];
+  challengeReport?: ChallengeReport;
   memo?: ResearchMemo;
   sources: Source[];
   errors: string[];

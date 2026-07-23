@@ -3,9 +3,12 @@ import { Annotation, END, START, StateGraph } from '@langchain/langgraph';
 import {
   ResearchMemoSchema,
   AnalystReportSchema,
+  ChallengeReportSchema,
   type AnalystReport,
   type AnalystRole,
+  type ChallengeReport,
   type Fundamentals,
+  type MarketSnapshot,
   type ResearchMemo,
   type ResearchRequest,
   type Source,
@@ -14,17 +17,23 @@ import { createResearchModel, getModelSettings } from './model.js';
 import {
   buildAnalystMessages,
   buildChairMessages,
+  buildFinalChairMessages,
   buildFallbackAnalystReport,
+  buildSkepticMessages,
   type CommitteeMessage,
 } from './prompts/committee.js';
 import { SecEdgarClient, SecEdgarError, type SecFundamentals } from './tools/sec-edgar.js';
+import { MassiveClient, MassiveError } from './tools/massive.js';
 
 const ResearchState = Annotation.Root({
   ticker: Annotation<string>,
   companyName: Annotation<string | undefined>,
   status: Annotation<'pending' | 'researching' | 'complete' | 'failed'>,
   fundamentals: Annotation<Fundamentals | undefined>,
+  marketSnapshot: Annotation<MarketSnapshot | undefined>,
   memo: Annotation<ResearchMemo | undefined>,
+  draftMemo: Annotation<ResearchMemo | undefined>,
+  challengeReport: Annotation<ChallengeReport | undefined>,
   analystReports: Annotation<AnalystReport[]>({
     reducer: (current, update) => [...current, ...update],
     default: () => [],
@@ -90,6 +99,16 @@ async function invokeOllamaChair(messages: CommitteeMessage[], modelEnvironment:
   return model.invoke(messages);
 }
 
+async function invokeOllamaChallenge(
+  messages: CommitteeMessage[],
+  modelEnvironment: ModelEnvironment,
+) {
+  const model = createResearchModel(getModelSettings(modelEnvironment)).withStructuredOutput(
+    ChallengeReportSchema,
+  );
+  return model.invoke(messages);
+}
+
 async function runAnalyst(
   state: typeof ResearchState.State,
   role: AnalystRole,
@@ -106,6 +125,7 @@ async function runAnalyst(
     ticker: state.ticker,
     companyName: state.companyName,
     fundamentals,
+    marketSnapshot: state.marketSnapshot,
     sources: state.sources,
   };
 
@@ -121,7 +141,7 @@ async function runAnalyst(
   }
 }
 
-async function writeChairMemo(
+async function writeChairDraft(
   state: typeof ResearchState.State,
   modelEnvironment: ModelEnvironment,
   invokeChairModel: ModelInvoker,
@@ -138,22 +158,105 @@ async function writeChairMemo(
         ticker: state.ticker,
         companyName: state.companyName,
         fundamentals,
+        marketSnapshot: state.marketSnapshot,
         sources: state.sources,
         analystReports: state.analystReports,
       }),
       modelEnvironment,
     );
 
-    return { status: 'complete' as const, memo: ResearchMemoSchema.parse(memo) };
+    return { draftMemo: ResearchMemoSchema.parse(memo) };
   } catch (error) {
     const reason = error instanceof Error ? error.message : 'Unknown Ollama error.';
 
     return {
-      status: 'complete' as const,
-      memo: buildDeterministicMemo(state),
+      draftMemo: buildDeterministicMemo(state),
       errors: [
-        `Committee chair synthesis was unavailable; returned deterministic SEC facts instead. ${reason}`,
+        `Committee chair draft was unavailable; returned deterministic SEC facts instead. ${reason}`,
       ],
+    };
+  }
+}
+
+function buildDeterministicChallenge(state: typeof ResearchState.State): ChallengeReport {
+  return {
+    thesisWeaknesses: ['The draft is based on a limited evidence set.'],
+    unsupportedClaims: [],
+    missingEvidence: [
+      'Review the underlying filing and market-data sources before relying on the memo.',
+    ],
+    keyRisks: ['The available data may not represent the company’s latest operating conditions.'],
+    requiredRevisions: ['Keep the educational disclaimer and make uncertainty visible.'],
+    confidence: 0.8,
+    sourceIdsUsed: state.sources.map((source) => source.id),
+  };
+}
+
+async function runSkepticChallenge(
+  state: typeof ResearchState.State,
+  modelEnvironment: ModelEnvironment,
+  invokeChallengeModel: ModelInvoker,
+) {
+  if (!state.draftMemo || !state.fundamentals) {
+    return {
+      status: 'failed' as const,
+      errors: ['No chair draft was available for skeptic review.'],
+    };
+  }
+
+  try {
+    const challenge = await invokeChallengeModel(
+      buildSkepticMessages({
+        ticker: state.ticker,
+        companyName: state.companyName,
+        fundamentals: state.fundamentals,
+        marketSnapshot: state.marketSnapshot,
+        sources: state.sources,
+        analystReports: state.analystReports,
+        draftMemo: state.draftMemo,
+      }),
+      modelEnvironment,
+    );
+    return { challengeReport: ChallengeReportSchema.parse(challenge) };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : 'Unknown Ollama error.';
+    return {
+      challengeReport: buildDeterministicChallenge(state),
+      errors: [`Skeptic challenge fallback used: ${reason}`],
+    };
+  }
+}
+
+async function writeFinalChairMemo(
+  state: typeof ResearchState.State,
+  modelEnvironment: ModelEnvironment,
+  invokeChairModel: ModelInvoker,
+) {
+  if (!state.draftMemo || !state.challengeReport || !state.fundamentals) {
+    return { status: 'failed' as const, errors: ['Committee review was incomplete.'] };
+  }
+
+  try {
+    const memo = await invokeChairModel(
+      buildFinalChairMessages({
+        ticker: state.ticker,
+        companyName: state.companyName,
+        fundamentals: state.fundamentals,
+        marketSnapshot: state.marketSnapshot,
+        sources: state.sources,
+        analystReports: state.analystReports,
+        draftMemo: state.draftMemo,
+        challengeReport: state.challengeReport,
+      }),
+      modelEnvironment,
+    );
+    return { status: 'complete' as const, memo: ResearchMemoSchema.parse(memo) };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : 'Unknown Ollama error.';
+    return {
+      status: 'complete' as const,
+      memo: state.draftMemo,
+      errors: [`Final chair synthesis was unavailable; returned the draft memo instead. ${reason}`],
     };
   }
 }
@@ -162,11 +265,16 @@ export function createResearchGraph(options: {
   secContactEmail: string;
   modelEnvironment: ModelEnvironment;
   secClient?: Pick<SecEdgarClient, 'getFundamentals'>;
+  marketDataClient?: Pick<MassiveClient, 'getMarketSnapshot'>;
   invokeAnalystModel?: ModelInvoker;
+  invokeChallengeModel?: ModelInvoker;
+  invokeDraftMemoModel?: ModelInvoker;
   invokeMemoModel?: ModelInvoker;
 }) {
   const secEdgar = options.secClient ?? new SecEdgarClient(options.secContactEmail);
   const invokeAnalystModel = options.invokeAnalystModel ?? invokeOllamaModel;
+  const invokeChallengeModel = options.invokeChallengeModel ?? invokeOllamaChallenge;
+  const invokeDraftMemoModel = options.invokeDraftMemoModel ?? invokeOllamaChair;
   const invokeChairModel = options.invokeMemoModel ?? invokeOllamaChair;
 
   async function fetchSecFundamentals(state: typeof ResearchState.State) {
@@ -184,9 +292,24 @@ export function createResearchGraph(options: {
     }
   }
 
+  async function fetchMarketData(state: typeof ResearchState.State) {
+    try {
+      const massive =
+        options.marketDataClient ??
+        new MassiveClient({ apiKey: options.modelEnvironment.MASSIVE_API_KEY });
+      const result = await massive.getMarketSnapshot(state.ticker);
+      return { marketSnapshot: result.snapshot, sources: [result.source] };
+    } catch (error) {
+      const message =
+        error instanceof MassiveError ? error.message : 'Massive market data failed unexpectedly.';
+      return { errors: [message] };
+    }
+  }
+
   return new StateGraph(ResearchState)
     .addNode('validateTicker', validateTicker)
     .addNode('fetchSecFundamentals', fetchSecFundamentals)
+    .addNode('fetchMarketData', fetchMarketData)
     .addNode('fundamentalsAnalyst', (state) =>
       runAnalyst(state, 'fundamentals', options.modelEnvironment, invokeAnalystModel),
     )
@@ -196,17 +319,29 @@ export function createResearchGraph(options: {
     .addNode('valuationAnalyst', (state) =>
       runAnalyst(state, 'valuation', options.modelEnvironment, invokeAnalystModel),
     )
+    .addNode('committeeDraft', (state) =>
+      writeChairDraft(state, options.modelEnvironment, invokeDraftMemoModel),
+    )
+    .addNode('skepticChallenge', (state) =>
+      runSkepticChallenge(state, options.modelEnvironment, invokeChallengeModel),
+    )
     .addNode('committeeChair', (state) =>
-      writeChairMemo(state, options.modelEnvironment, invokeChairModel),
+      writeFinalChairMemo(state, options.modelEnvironment, invokeChairModel),
     )
     .addEdge(START, 'validateTicker')
     .addEdge('validateTicker', 'fetchSecFundamentals')
+    .addEdge('validateTicker', 'fetchMarketData')
     .addEdge('fetchSecFundamentals', 'fundamentalsAnalyst')
+    .addEdge('fetchMarketData', 'fundamentalsAnalyst')
     .addEdge('fetchSecFundamentals', 'businessQualityAnalyst')
+    .addEdge('fetchMarketData', 'businessQualityAnalyst')
     .addEdge('fetchSecFundamentals', 'valuationAnalyst')
-    .addEdge('fundamentalsAnalyst', 'committeeChair')
-    .addEdge('businessQualityAnalyst', 'committeeChair')
-    .addEdge('valuationAnalyst', 'committeeChair')
+    .addEdge('fetchMarketData', 'valuationAnalyst')
+    .addEdge('fundamentalsAnalyst', 'committeeDraft')
+    .addEdge('businessQualityAnalyst', 'committeeDraft')
+    .addEdge('valuationAnalyst', 'committeeDraft')
+    .addEdge('committeeDraft', 'skepticChallenge')
+    .addEdge('skepticChallenge', 'committeeChair')
     .addEdge('committeeChair', END)
     .compile();
 }

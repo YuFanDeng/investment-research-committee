@@ -50,6 +50,7 @@ describe('research committee graph', () => {
       'fundamentals',
       'valuation',
     ]);
+    expect(result.challengeReport?.requiredRevisions.length).toBeGreaterThan(0);
   });
 
   it('returns deterministic facts when the model fails', async () => {

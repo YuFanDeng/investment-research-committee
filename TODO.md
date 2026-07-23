@@ -13,11 +13,13 @@ After each step, review the technical decision and verify the result before movi
 
 ## Next milestones
 
-- [ ] Run a live end-to-end memo with the configured local Ollama model.
+- [x] Run a live end-to-end memo with the configured local Ollama model.
 - [ ] Add streaming research status and clearer model/fallback states to the UI.
 - [x] Expand the single memo writer into a three-analyst research committee.
-- [ ] Add market-price and peer data for the valuation analyst.
-- [ ] Add a dedicated chair challenge pass for skeptic/risk review.
+- [x] Add a Massive market-price adapter for the valuation analyst.
+- [x] Add peer-comparison data for the valuation analyst.
+- [x] Compact historical market data into deterministic metrics before LLM prompts.
+- [x] Add a dedicated chair challenge pass for skeptic/risk review.
 - [ ] Add an architecture diagram, screenshots, evaluation results, and known limitations for the interview demo.
 
 ## Multi-agent committee milestone
