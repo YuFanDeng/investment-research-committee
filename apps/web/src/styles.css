@@ -273,6 +273,11 @@ button:disabled {
   height: 100%;
   transition: width 400ms ease;
 }
+.progress-status {
+  color: var(--soft);
+  font-size: 0.78rem;
+  margin: 0 0 1rem;
+}
 .phase-list {
   color: var(--muted);
   display: grid;

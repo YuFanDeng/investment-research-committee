@@ -17,7 +17,7 @@ export default function App() {
   const [ticker, setTicker] = useState('AAPL');
   const isDevelopment = import.meta.env.DEV;
   const [secDataMode, setSecDataMode] = useState<SecDataMode>(isDevelopment ? 'fixture' : 'live');
-  const { activePhase, error, isLoading, result, submitResearch } = useResearch();
+  const { activePhase, error, isLoading, result, statusMessage, submitResearch } = useResearch();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,6 +69,7 @@ export default function App() {
         activePhase={activePhase}
         isLoading={isLoading}
         hasResult={Boolean(result?.memo)}
+        statusMessage={statusMessage}
       />
 
       {result?.memo ? (

@@ -80,3 +80,10 @@ export type ResearchResponse = {
 };
 
 export type ResearchPhaseId = 'validate' | 'evidence' | 'memo' | 'verify';
+
+export type ResearchEvent =
+  | { type: 'run.started'; ticker: string; secDataMode: SecDataMode }
+  | { type: 'stage.started'; stage: string }
+  | { type: 'stage.completed'; stage: string }
+  | { type: 'run.completed'; result: ResearchResponse }
+  | { type: 'run.failed'; message: string };

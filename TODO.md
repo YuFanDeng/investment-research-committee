@@ -14,7 +14,7 @@ After each step, review the technical decision and verify the result before movi
 ## Next milestones
 
 - [x] Run a live end-to-end memo with the configured local Ollama model.
-- [ ] Add streaming research status and clearer model/fallback states to the UI.
+- [x] Add streaming research status and clearer model/fallback states to the UI.
 - [x] Expand the single memo writer into a three-analyst research committee.
 - [x] Add a Massive market-price adapter for the valuation analyst.
 - [x] Add peer-comparison data for the valuation analyst.

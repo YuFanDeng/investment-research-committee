@@ -6,6 +6,7 @@ import { serve } from '@hono/node-server';
 import { zValidator } from '@hono/zod-validator';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
+import { streamSSE } from 'hono/streaming';
 import {
   createResearchGraph,
   FixtureSecEdgarClient,
@@ -28,6 +29,29 @@ const fixtureResearchGraph = createResearchGraph({
   secClient: new FixtureSecEdgarClient(),
 });
 
+function graphForRequest(secDataMode: 'live' | 'fixture') {
+  return secDataMode === 'fixture' ? fixtureResearchGraph : liveResearchGraph;
+}
+
+function responseForResult(
+  result: Awaited<ReturnType<typeof liveResearchGraph.invoke>>,
+  secDataMode: 'live' | 'fixture',
+) {
+  return {
+    ticker: result.ticker,
+    secDataMode,
+    companyName: result.companyName,
+    status: result.status,
+    fundamentals: result.fundamentals,
+    marketSnapshot: result.marketSnapshot,
+    analystReports: result.analystReports,
+    challengeReport: result.challengeReport,
+    memo: result.memo,
+    sources: result.sources,
+    errors: result.errors,
+  };
+}
+
 app.use(
   '/*',
   cors({
@@ -44,21 +68,63 @@ app.post('/research', zValidator('json', ResearchRequestSchema), async (context)
     return context.json({ message: 'SEC fixtures are available only in development.' }, 400);
   }
 
-  const graph = input.secDataMode === 'fixture' ? fixtureResearchGraph : liveResearchGraph;
+  const graph = graphForRequest(input.secDataMode);
   const result = await graph.invoke(input);
 
-  return context.json({
-    ticker: result.ticker,
-    secDataMode: input.secDataMode,
-    companyName: result.companyName,
-    status: result.status,
-    fundamentals: result.fundamentals,
-    marketSnapshot: result.marketSnapshot,
-    analystReports: result.analystReports,
-    challengeReport: result.challengeReport,
-    memo: result.memo,
-    sources: result.sources,
-    errors: result.errors,
+  return context.json(responseForResult(result, input.secDataMode));
+});
+
+app.post('/research/stream', zValidator('json', ResearchRequestSchema), async (context) => {
+  const input = context.req.valid('json');
+  if (input.secDataMode === 'fixture' && process.env.NODE_ENV === 'production') {
+    return context.json({ message: 'SEC fixtures are available only in development.' }, 400);
+  }
+
+  const graph = graphForRequest(input.secDataMode);
+
+  return streamSSE(context, async (stream) => {
+    await stream.writeSSE({
+      event: 'run.started',
+      data: JSON.stringify({ ticker: input.ticker, secDataMode: input.secDataMode }),
+    });
+
+    let finalState: Awaited<ReturnType<typeof liveResearchGraph.invoke>> | undefined;
+
+    try {
+      const graphStream = await graph.stream(input, {
+        streamMode: ['values', 'tasks'],
+      } as never);
+
+      for await (const rawChunk of graphStream as AsyncIterable<unknown>) {
+        if (!Array.isArray(rawChunk) || rawChunk.length !== 2) continue;
+        const [mode, payload] = rawChunk as [string, Record<string, unknown>];
+
+        if (mode === 'values') {
+          finalState = payload as typeof finalState;
+          continue;
+        }
+
+        if (mode !== 'tasks' || typeof payload.name !== 'string') continue;
+        const eventType = 'result' in payload ? 'stage.completed' : 'stage.started';
+        await stream.writeSSE({
+          event: eventType,
+          data: JSON.stringify({ stage: payload.name }),
+        });
+      }
+
+      if (!finalState) throw new Error('Research stream ended without a final state.');
+      await stream.writeSSE({
+        event: 'run.completed',
+        data: JSON.stringify(responseForResult(finalState, input.secDataMode)),
+      });
+    } catch (error) {
+      await stream.writeSSE({
+        event: 'run.failed',
+        data: JSON.stringify({
+          message: error instanceof Error ? error.message : 'Research stream failed.',
+        }),
+      });
+    }
   });
 });
 

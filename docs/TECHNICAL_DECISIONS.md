@@ -14,6 +14,7 @@ This document records the initial implementation choices for the Investment Rese
 | Primary evidence source | SEC EDGAR          | Provides authoritative U.S. company filing and financial data.                                                       |
 | Market data provider    | Massive            | Documented TypeScript-friendly API with a free end-of-day tier suitable for the valuation analyst demo.              |
 | Code formatting         | Prettier           | Keeps source files consistently readable and reduces formatting noise in reviews.                                    |
+| Progress transport      | Server-Sent Events | Streams one LangGraph run to the React UI without making the browser orchestrate internal agents.                    |
 
 ## Architecture
 
@@ -45,6 +46,7 @@ The first graph validates a U.S. ticker using Zod, then performs these determini
 - Invoke the LangGraph workflow.
 - Stream workflow status to the client when needed.
 - Return the final memo, evidence, and source list.
+- Stream stage and task lifecycle events through `/research/stream`.
 - Keep API keys and third-party calls on the server.
 
 ## Validation boundaries

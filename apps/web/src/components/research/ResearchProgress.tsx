@@ -11,9 +11,15 @@ type ResearchProgressProps = {
   activePhase: ResearchPhaseId;
   isLoading: boolean;
   hasResult: boolean;
+  statusMessage: string;
 };
 
-export function ResearchProgress({ activePhase, isLoading, hasResult }: ResearchProgressProps) {
+export function ResearchProgress({
+  activePhase,
+  isLoading,
+  hasResult,
+  statusMessage,
+}: ResearchProgressProps) {
   const activeIndex = PHASES.findIndex((phase) => phase.id === activePhase);
 
   return (
@@ -24,6 +30,9 @@ export function ResearchProgress({ activePhase, isLoading, hasResult }: Research
           {isLoading ? 'LIVE' : hasResult ? 'COMPLETE' : 'READY'}
         </span>
       </div>
+      <p className="progress-status" role="status">
+        {statusMessage}
+      </p>
       <div className="progress-track" aria-hidden="true">
         <span
           style={{
