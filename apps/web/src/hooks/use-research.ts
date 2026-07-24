@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { runResearch as requestResearch } from '../lib/research-api';
-import type { ResearchPhaseId, ResearchResponse } from '../types/research';
+import type { ResearchPhaseId, ResearchResponse, SecDataMode } from '../types/research';
 
 const PHASES: ResearchPhaseId[] = ['validate', 'evidence', 'memo', 'verify'];
 
@@ -24,12 +24,12 @@ export function useResearch() {
     return () => window.clearInterval(timer);
   }, [isLoading]);
 
-  async function submitResearch(ticker: string) {
+  async function submitResearch(ticker: string, secDataMode: SecDataMode) {
     setIsLoading(true);
     setError(undefined);
 
     try {
-      setResult(await requestResearch(ticker));
+      setResult(await requestResearch(ticker, secDataMode));
     } catch (caughtError) {
       setError(
         caughtError instanceof Error ? caughtError.message : 'An unexpected error occurred.',

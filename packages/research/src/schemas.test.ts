@@ -4,7 +4,10 @@ import { ResearchMemoSchema, ResearchRequestSchema } from './schemas.js';
 
 describe('research schemas', () => {
   it('normalizes valid ticker input', () => {
-    expect(ResearchRequestSchema.parse({ ticker: ' aapl ' })).toEqual({ ticker: 'AAPL' });
+    expect(ResearchRequestSchema.parse({ ticker: ' aapl ' })).toEqual({
+      ticker: 'AAPL',
+      secDataMode: 'live',
+    });
   });
 
   it('rejects malformed ticker input', () => {

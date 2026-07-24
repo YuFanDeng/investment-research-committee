@@ -1,13 +1,26 @@
 import type { FormEvent } from 'react';
 
+import type { SecDataMode } from '../../types/research';
+
 type TickerSearchProps = {
   isLoading: boolean;
   ticker: string;
   onChange: (ticker: string) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  isDevelopment: boolean;
+  secDataMode: SecDataMode;
+  onSecDataModeChange: (mode: SecDataMode) => void;
 };
 
-export function TickerSearch({ isLoading, ticker, onChange, onSubmit }: TickerSearchProps) {
+export function TickerSearch({
+  isLoading,
+  ticker,
+  onChange,
+  onSubmit,
+  isDevelopment,
+  secDataMode,
+  onSecDataModeChange,
+}: TickerSearchProps) {
   return (
     <form className="ticker-form" onSubmit={onSubmit}>
       <div className="field-label-row">
@@ -32,6 +45,29 @@ export function TickerSearch({ isLoading, ticker, onChange, onSubmit }: TickerSe
           <span aria-hidden="true">↗</span>
         </button>
       </div>
+      {isDevelopment ? (
+        <fieldset className="data-mode-toggle">
+          <legend>SEC source</legend>
+          <label>
+            <input
+              type="radio"
+              name="sec-data-mode"
+              checked={secDataMode === 'fixture'}
+              onChange={() => onSecDataModeChange('fixture')}
+            />
+            Fixture (AAPL)
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="sec-data-mode"
+              checked={secDataMode === 'live'}
+              onChange={() => onSecDataModeChange('live')}
+            />
+            Live SEC
+          </label>
+        </fieldset>
+      ) : null}
       <p className="form-hint">Try AAPL, MSFT, NVDA, or another listed U.S. ticker.</p>
     </form>
   );

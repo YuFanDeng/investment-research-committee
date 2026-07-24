@@ -1,12 +1,15 @@
-import type { ResearchResponse } from '../types/research';
+import type { ResearchResponse, SecDataMode } from '../types/research';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8787';
 
-export async function runResearch(ticker: string): Promise<ResearchResponse> {
+export async function runResearch(
+  ticker: string,
+  secDataMode: SecDataMode,
+): Promise<ResearchResponse> {
   const response = await fetch(`${API_URL}/research`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ticker }),
+    body: JSON.stringify({ ticker, secDataMode }),
   });
 
   if (!response.ok) {

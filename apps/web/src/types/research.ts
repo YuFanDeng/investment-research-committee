@@ -1,4 +1,5 @@
 export type ResearchStatus = 'pending' | 'researching' | 'complete' | 'failed';
+export type SecDataMode = 'live' | 'fixture';
 
 export type Source = {
   id: string;
@@ -67,6 +68,7 @@ export type ChallengeReport = {
 export type ResearchResponse = {
   ticker: string;
   companyName?: string;
+  secDataMode: SecDataMode;
   status: ResearchStatus;
   fundamentals?: Fundamentals;
   marketSnapshot?: MarketSnapshot;

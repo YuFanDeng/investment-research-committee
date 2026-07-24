@@ -11,14 +11,17 @@ import { TickerSearch } from './components/research/TickerSearch';
 import { MarketSnapshotPanel } from './components/research/MarketSnapshotPanel';
 import { SkepticPanel } from './components/research/SkepticPanel';
 import { useResearch } from './hooks/use-research';
+import type { SecDataMode } from './types/research';
 
 export default function App() {
   const [ticker, setTicker] = useState('AAPL');
+  const isDevelopment = import.meta.env.DEV;
+  const [secDataMode, setSecDataMode] = useState<SecDataMode>(isDevelopment ? 'fixture' : 'live');
   const { activePhase, error, isLoading, result, submitResearch } = useResearch();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    void submitResearch(ticker.trim());
+    void submitResearch(ticker.trim(), secDataMode);
   }
 
   return (
@@ -51,6 +54,9 @@ export default function App() {
         ticker={ticker}
         onChange={setTicker}
         onSubmit={handleSubmit}
+        isDevelopment={isDevelopment}
+        secDataMode={secDataMode}
+        onSecDataModeChange={setSecDataMode}
       />
       {error ? (
         <div className="request-error" role="alert">

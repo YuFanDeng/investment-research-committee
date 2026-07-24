@@ -29,7 +29,8 @@ Open `http://localhost:5173`. The API runs at `http://localhost:8787`.
 
 The root `.env` contains local API and Vite configuration and is ignored by Git. Copy `.env.example` when configuring a new environment; keep the real Massive key in this root file only.
 
-Use `pnpm dev:mock` when you want to skip the slower SEC EDGAR request while keeping live Massive market data. The normal `pnpm dev` command uses live SEC data.
+In development, the UI includes a SEC source toggle. Choose the AAPL fixture for fast
+iteration or Live SEC for a real request. Production builds expose only the live mode.
 
 ## Checks
 

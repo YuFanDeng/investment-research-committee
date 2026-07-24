@@ -10,7 +10,7 @@ type TickerRecord = {
   title: string;
 };
 
-type CompanyFactsResponse = {
+export type CompanyFactsResponse = {
   entityName?: string;
   facts?: Record<string, Record<string, { units?: Record<string, SecFact[]> }>>;
 };
@@ -91,7 +91,7 @@ function latestAnnualFactByYear(response: CompanyFactsResponse, tags: string[]) 
   return annualFacts;
 }
 
-function selectFundamentals(response: CompanyFactsResponse): Fundamentals {
+export function selectFundamentals(response: CompanyFactsResponse): Fundamentals {
   const revenue = latestAnnualFactByYear(response, [
     'Revenues',
     'RevenueFromContractWithCustomerExcludingAssessedTax',

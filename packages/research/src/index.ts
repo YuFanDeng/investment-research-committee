@@ -8,7 +8,7 @@ export {
 } from './prompts/committee.js';
 export { SecEdgarClient, SecEdgarError } from './tools/sec-edgar.js';
 export { MassiveClient, MassiveError } from './tools/massive.js';
-export { MockMassiveClient, MockSecEdgarClient } from './tools/mock-data.js';
+export { FixtureSecEdgarClient } from './tools/mock-data.js';
 export {
   FundamentalsSchema,
   AnalystReportSchema,

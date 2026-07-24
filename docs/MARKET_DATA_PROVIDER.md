@@ -40,10 +40,9 @@ Useful references:
    MASSIVE_API_KEY=your_key_here
    ```
 
-For fast local development, run `pnpm dev:mock`. This sets the process-only
-`USE_MOCK_DATA=true` flag, bypassing the slower SEC EDGAR call while keeping Massive market
-data live, so the valuation analyst still works with real prices and peers. The normal
-`pnpm dev` command uses live SEC research.
+For fast local development, use the SEC source toggle in the UI and choose the AAPL fixture.
+The fixture bypasses the slower SEC EDGAR call while keeping Massive market data live, so the
+valuation analyst still works with real prices and peers. Production accepts live SEC only.
 
 5. Keep the key server-side. Do not put it in `apps/web`, commit it, or expose it to the
    browser. The repository ignores `.env` files.

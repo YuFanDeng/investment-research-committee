@@ -8,7 +8,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import {
   createResearchGraph,
-  MockSecEdgarClient,
+  FixtureSecEdgarClient,
   ResearchRequestSchema,
 } from '@investment-research/research';
 
@@ -17,13 +17,15 @@ dotenv.config({ path: resolve(dirname(fileURLToPath(import.meta.url)), '../../..
 const contactEmail = process.env.SEC_CONTACT_EMAIL;
 if (!contactEmail) throw new Error('SEC_CONTACT_EMAIL must be configured.');
 
-const useMockData = process.env.USE_MOCK_DATA?.toLowerCase() === 'true';
-
 const app = new Hono();
-const researchGraph = createResearchGraph({
+const liveResearchGraph = createResearchGraph({
   secContactEmail: contactEmail,
   modelEnvironment: { ...process.env },
-  secClient: useMockData ? new MockSecEdgarClient() : undefined,
+});
+const fixtureResearchGraph = createResearchGraph({
+  secContactEmail: contactEmail,
+  modelEnvironment: { ...process.env },
+  secClient: new FixtureSecEdgarClient(),
 });
 
 app.use(
@@ -38,10 +40,16 @@ app.get('/health', (context) => context.json({ status: 'ok' }));
 
 app.post('/research', zValidator('json', ResearchRequestSchema), async (context) => {
   const input = context.req.valid('json');
-  const result = await researchGraph.invoke(input);
+  if (input.secDataMode === 'fixture' && process.env.NODE_ENV === 'production') {
+    return context.json({ message: 'SEC fixtures are available only in development.' }, 400);
+  }
+
+  const graph = input.secDataMode === 'fixture' ? fixtureResearchGraph : liveResearchGraph;
+  const result = await graph.invoke(input);
 
   return context.json({
     ticker: result.ticker,
+    secDataMode: input.secDataMode,
     companyName: result.companyName,
     status: result.status,
     fundamentals: result.fundamentals,

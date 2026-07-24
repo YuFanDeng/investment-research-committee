@@ -6,6 +6,7 @@ export const ResearchRequestSchema = z.object({
     .trim()
     .toUpperCase()
     .regex(/^[A-Z.]{1,10}$/, 'Enter a valid U.S. ticker.'),
+  secDataMode: z.enum(['live', 'fixture']).default('live'),
 });
 
 export const SourceSchema = z.object({

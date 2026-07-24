@@ -1,83 +1,43 @@
-import type { Fundamentals } from '../schemas.js';
-import type { MarketDataResult } from './massive.js';
-import type { SecFundamentals } from './sec-edgar.js';
+import { readFile } from 'node:fs/promises';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const MOCK_PEERS = ['MSFT', 'GOOGL', 'AMZN'];
+import type { CompanyFactsResponse } from './sec-edgar.js';
+import { SecEdgarError, selectFundamentals } from './sec-edgar.js';
 
-function mockSource(
-  id: string,
-  title: string,
-  url: string,
-  sourceType: 'sec_filing' | 'market_data',
-) {
-  return {
-    id,
-    title,
-    url,
-    sourceType,
-    retrievedAt: new Date().toISOString(),
-  } as const;
-}
+const AAPL_FIXTURE_TICKER = 'AAPL';
+const AAPL_FIXTURE_RETRIEVED_AT = '2026-07-23T00:00:00.000Z';
+const AAPL_COMPANY_FACTS_URL = 'https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json';
+const fixturePath = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../fixtures/sec/companyfacts/AAPL.json',
+);
 
-function mockFundamentals(ticker: string): Fundamentals {
-  const seed = ticker.split('').reduce((total, character) => total + character.charCodeAt(0), 0);
-  const revenueUsd = (90 + (seed % 40)) * 1_000_000_000;
+export class FixtureSecEdgarClient {
+  async getFundamentals(ticker: string) {
+    if (ticker.toUpperCase() !== AAPL_FIXTURE_TICKER) {
+      throw new SecEdgarError(
+        'No SEC fixture is available for this ticker. Use AAPL or switch to live mode.',
+      );
+    }
 
-  return {
-    fiscalYear: 2025,
-    revenueUsd,
-    netIncomeUsd: revenueUsd * 0.2,
-    operatingCashFlowUsd: revenueUsd * 0.25,
-  };
-}
-
-export class MockSecEdgarClient {
-  async getFundamentals(ticker: string): Promise<SecFundamentals> {
-    return {
-      companyName: `${ticker.toUpperCase()} Mock Corporation`,
-      fundamentals: mockFundamentals(ticker),
-      source: mockSource(
-        `mock-sec-${ticker.toUpperCase()}`,
-        `${ticker.toUpperCase()} — mock SEC fundamentals`,
-        'https://example.com/mock/sec-fundamentals',
-        'sec_filing',
-      ),
-    };
-  }
-}
-
-export class MockMassiveClient {
-  async getMarketSnapshot(ticker: string): Promise<MarketDataResult> {
-    const normalizedTicker = ticker.toUpperCase();
-    const retrievedAt = new Date().toISOString();
-    const currentPrice = 100;
+    let response: CompanyFactsResponse;
+    try {
+      response = JSON.parse(await readFile(fixturePath, 'utf8')) as CompanyFactsResponse;
+    } catch {
+      throw new SecEdgarError('The AAPL SEC fixture could not be loaded.');
+    }
 
     return {
-      snapshot: {
-        currentPrice,
-        previousClose: currentPrice,
-        historicalCloses: Array.from({ length: 20 }, (_, index) => ({
-          date: new Date(Date.now() - (19 - index) * 86_400_000).toISOString().slice(0, 10),
-          close: currentPrice - (19 - index) * 0.5,
-        })),
-        marketCap: 1_000_000_000_000,
-        currency: 'USD',
-        adjusted: true,
-        retrievedAt,
-        sourceId: `mock-market-${normalizedTicker}`,
-        peers: MOCK_PEERS.map((peerTicker, index) => ({
-          ticker: peerTicker,
-          name: `${peerTicker} Mock Corporation`,
-          marketCap: (900 - index * 100) * 1_000_000_000,
-          currency: 'USD',
-        })),
+      companyName: response.entityName ?? 'Apple Inc.',
+      fundamentals: selectFundamentals(response),
+      source: {
+        id: 'fixture-sec-company-facts-aapl',
+        title: 'Apple Inc. — SEC EDGAR Company Facts (fixture)',
+        url: AAPL_COMPANY_FACTS_URL,
+        sourceType: 'sec_filing' as const,
+        retrievedAt: AAPL_FIXTURE_RETRIEVED_AT,
       },
-      source: mockSource(
-        `mock-market-${normalizedTicker}`,
-        `${normalizedTicker} — mock market data`,
-        'https://example.com/mock/market-data',
-        'market_data',
-      ),
     };
   }
 }

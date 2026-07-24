@@ -4,3 +4,4 @@ coverage
 .idea
 pnpm-lock.yaml
 package-lock.json
+packages/research/src/fixtures/sec/companyfacts/*.json
