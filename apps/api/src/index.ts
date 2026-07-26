@@ -52,6 +52,16 @@ function responseForResult(
   };
 }
 
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === 'object' && value !== null
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function asArray(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
 app.use(
   '/*',
   cors({
@@ -92,7 +102,7 @@ app.post('/research/stream', zValidator('json', ResearchRequestSchema), async (c
 
     try {
       const graphStream = await graph.stream(input, {
-        streamMode: ['values', 'tasks'],
+        streamMode: ['values', 'updates', 'tasks'],
       } as never);
 
       for await (const rawChunk of graphStream as AsyncIterable<unknown>) {
@@ -101,6 +111,63 @@ app.post('/research/stream', zValidator('json', ResearchRequestSchema), async (c
 
         if (mode === 'values') {
           finalState = payload as typeof finalState;
+          continue;
+        }
+
+        if (mode === 'updates') {
+          for (const [stage, rawUpdate] of Object.entries(payload)) {
+            const update = asRecord(rawUpdate);
+            if (!update) continue;
+
+            const shared = {
+              errors: asArray(update.errors),
+              sources: asArray(update.sources),
+            };
+
+            if (stage === 'fetchSecFundamentals') {
+              await stream.writeSSE({
+                event: 'sec.completed',
+                data: JSON.stringify({
+                  ...shared,
+                  companyName: update.companyName,
+                  fundamentals: update.fundamentals,
+                }),
+              });
+            } else if (stage === 'fetchMarketData') {
+              await stream.writeSSE({
+                event: 'market.completed',
+                data: JSON.stringify({
+                  ...shared,
+                  snapshot: update.marketSnapshot,
+                }),
+              });
+            } else if (
+              stage === 'fundamentalsAnalyst' ||
+              stage === 'businessQualityAnalyst' ||
+              stage === 'valuationAnalyst'
+            ) {
+              await stream.writeSSE({
+                event: 'analyst.completed',
+                data: JSON.stringify({
+                  ...shared,
+                  report: asArray(update.analystReports)[0],
+                }),
+              });
+            } else if (stage === 'committeeDraft') {
+              await stream.writeSSE({
+                event: 'draft.completed',
+                data: JSON.stringify({ errors: shared.errors }),
+              });
+            } else if (stage === 'skepticChallenge') {
+              await stream.writeSSE({
+                event: 'challenge.completed',
+                data: JSON.stringify({
+                  ...shared,
+                  report: update.challengeReport,
+                }),
+              });
+            }
+          }
           continue;
         }
 

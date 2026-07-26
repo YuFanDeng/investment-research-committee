@@ -1,11 +1,37 @@
 import type { ChallengeReport } from '../../types/research';
+import type { ResearchStageStatus } from '../../hooks/use-research';
 
 type SkepticPanelProps = {
   report?: ChallengeReport;
+  isLoading: boolean;
+  status: ResearchStageStatus;
 };
 
-export function SkepticPanel({ report }: SkepticPanelProps) {
-  if (!report) return null;
+export function SkepticPanel({ report, isLoading, status }: SkepticPanelProps) {
+  if (!report && !isLoading) return null;
+
+  if (!report) {
+    return (
+      <section className="skeptic-panel" aria-labelledby="skeptic-heading">
+        <div className="evidence-heading">
+          <div>
+            <span className="section-kicker">Quality gate</span>
+            <h2 id="skeptic-heading">Skeptic challenge</h2>
+          </div>
+          <span className={`artifact-status is-${status}`}>{status}</span>
+        </div>
+        <div className="artifact-placeholder" role="status">
+          <span className="skeleton-line skeleton-line-wide" />
+          <span className="skeleton-line" />
+          <p>
+            {status === 'active'
+              ? 'The skeptic is challenging the chair draft…'
+              : 'Waiting for the committee draft.'}
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   const sections = [
     ['Thesis weaknesses', report.thesisWeaknesses],
@@ -15,7 +41,7 @@ export function SkepticPanel({ report }: SkepticPanelProps) {
   ] as const;
 
   return (
-    <section className="skeptic-panel" aria-labelledby="skeptic-heading">
+    <section className="skeptic-panel artifact-enter" aria-labelledby="skeptic-heading">
       <div className="evidence-heading">
         <div>
           <span className="section-kicker">Quality gate</span>

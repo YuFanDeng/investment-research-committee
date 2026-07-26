@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 
 import type { MarketSnapshot } from '../../types/research';
 import { BarChart3, Clock3, ExternalLink, TrendingUp, Users } from 'lucide-react';
+import type { ResearchStageStatus } from '../../hooks/use-research';
 
 const PriceChart = lazy(() =>
   import('./PriceChart').then(({ PriceChart: Chart }) => ({ default: Chart })),
@@ -9,6 +10,7 @@ const PriceChart = lazy(() =>
 
 type MarketSnapshotPanelProps = {
   snapshot?: MarketSnapshot;
+  status: ResearchStageStatus;
 };
 
 function formatBillions(value?: number) {
@@ -22,11 +24,41 @@ function calculateReturn(snapshot: MarketSnapshot) {
   return `${(((last - first) / first) * 100).toFixed(1)}%`;
 }
 
-export function MarketSnapshotPanel({ snapshot }: MarketSnapshotPanelProps) {
-  if (!snapshot) return null;
+export function MarketSnapshotPanel({ snapshot, status }: MarketSnapshotPanelProps) {
+  if (!snapshot) {
+    return (
+      <section className="market-snapshot-panel" aria-labelledby="market-snapshot-heading">
+        <div className="evidence-heading">
+          <div>
+            <span className="section-kicker">
+              <BarChart3 size={13} /> Market context
+            </span>
+            <h2 id="market-snapshot-heading">Price & peer snapshot</h2>
+          </div>
+          <span className={`artifact-status is-${status}`}>
+            <Clock3 size={12} /> {status}
+          </span>
+        </div>
+        <div className="artifact-placeholder" role="status">
+          <span className="skeleton-line skeleton-line-wide" />
+          <span className="skeleton-line" />
+          <p>
+            {status === 'active'
+              ? 'Retrieving Massive end-of-day prices…'
+              : status === 'complete'
+                ? 'Market data was unavailable.'
+                : 'Waiting for ticker validation.'}
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <section className="market-snapshot-panel" aria-labelledby="market-snapshot-heading">
+    <section
+      className="market-snapshot-panel artifact-enter"
+      aria-labelledby="market-snapshot-heading"
+    >
       <div className="evidence-heading">
         <div>
           <span className="section-kicker">

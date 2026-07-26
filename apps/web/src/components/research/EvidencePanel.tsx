@@ -2,9 +2,10 @@ import type { Source } from '../../types/research';
 
 type EvidencePanelProps = {
   sources: Source[];
+  isLoading: boolean;
 };
 
-export function EvidencePanel({ sources }: EvidencePanelProps) {
+export function EvidencePanel({ sources, isLoading }: EvidencePanelProps) {
   return (
     <aside className="memo-card evidence-panel">
       <div className="section-kicker">Evidence trail</div>
@@ -32,7 +33,9 @@ export function EvidencePanel({ sources }: EvidencePanelProps) {
             </a>
           ))
         ) : (
-          <p className="empty-panel">Sources will appear after a research run.</p>
+          <p className="empty-panel">
+            {isLoading ? 'Waiting for provider responses…' : 'No sources were returned.'}
+          </p>
         )}
       </div>
       <div className="evidence-footer">

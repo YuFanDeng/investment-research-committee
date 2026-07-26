@@ -16,11 +16,36 @@ run.started
   ↓
 stage.started / stage.completed
   ↓
+sec.completed / market.completed
+  ↓
+analyst.completed (once per analyst)
+  ↓
+draft.completed / challenge.completed
+  ↓
 run.completed
 ```
 
 Stages include ticker validation, SEC evidence, Massive market data, the three analysts,
 chair draft, skeptic challenge, and final chair synthesis.
+
+## Progressive artifacts
+
+The graph streams `updates` alongside `tasks` and `values`. Task events drive the timeline,
+update events expose selected structured artifacts, and the latest values snapshot remains the
+authoritative final response.
+
+The API deliberately forwards validated domain artifacts instead of the graph's complete internal
+state:
+
+- SEC fundamentals and their source become visible as soon as EDGAR finishes.
+- The Massive snapshot and historical price series render independently of SEC.
+- Each analyst report appears when that analyst completes.
+- The UI announces that the chair draft exists but does not show its contents before review.
+- The skeptic challenge appears before final chair synthesis.
+- `run.completed` replaces the accumulated partial state with the authoritative final result.
+
+This keeps one API request and one LangGraph run while avoiding an empty results area during a
+long-running committee workflow.
 
 ## Why SSE
 

@@ -611,6 +611,12 @@ button:disabled {
   border-radius: 0.55rem;
   padding: 1rem;
 }
+.analyst-pending {
+  min-height: 14rem;
+}
+.analyst-pending .artifact-placeholder {
+  padding-top: 1.35rem;
+}
 .analyst-report-header {
   align-items: center;
   display: flex;
@@ -623,6 +629,15 @@ button:disabled {
 .analyst-report-header span {
   color: var(--accent);
   font-size: 0.65rem;
+}
+.analyst-report-header .artifact-status {
+  color: var(--muted);
+}
+.analyst-report-header .artifact-status.is-active {
+  color: var(--accent);
+}
+.analyst-report-header .artifact-status.is-complete {
+  color: #b9f0af;
 }
 .analyst-report > p {
   color: var(--soft);
@@ -664,6 +679,84 @@ button:disabled {
   border-radius: 0.8rem;
   grid-column: 1 / -1;
   padding: 1.3rem;
+}
+.fundamentals-panel {
+  background: #141d17e8;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  grid-column: 1 / -1;
+  padding: 1.3rem;
+}
+.artifact-status {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  color: var(--muted);
+  display: inline-flex;
+  font-size: 0.62rem;
+  font-weight: 800;
+  gap: 0.3rem;
+  letter-spacing: 0.05em;
+  padding: 0.3rem 0.55rem;
+  text-transform: uppercase;
+}
+.artifact-status.is-active {
+  background: #223b29;
+  border-color: #477d55;
+  color: var(--accent);
+}
+.artifact-status.is-complete {
+  background: #1b3a27;
+  border-color: #356442;
+  color: #b9f0af;
+}
+.artifact-placeholder {
+  color: var(--muted);
+  min-height: 7rem;
+  padding: 1.15rem 0 0.35rem;
+}
+.artifact-placeholder p {
+  font-size: 0.73rem;
+  line-height: 1.5;
+  margin: 1rem 0 0;
+}
+.skeleton-line {
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+  background: linear-gradient(90deg, #223027, #304336, #223027);
+  background-size: 200% 100%;
+  border-radius: 99px;
+  display: block;
+  height: 0.6rem;
+  margin-top: 0.55rem;
+  max-width: 22rem;
+  width: 58%;
+}
+.skeleton-line-wide {
+  width: 82%;
+}
+.skeleton-line-short {
+  width: 38%;
+}
+.artifact-enter {
+  animation: artifact-enter 300ms ease-out both;
+}
+@keyframes skeleton-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+@keyframes artifact-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .market-snapshot-panel .section-kicker {
   margin-bottom: 0.45rem;
@@ -774,6 +867,9 @@ button:disabled {
   border-radius: 0.8rem;
   grid-column: 1 / -1;
   padding: 1.3rem;
+}
+.pending-result-card {
+  min-height: 20rem;
 }
 .skeptic-grid {
   display: grid;
@@ -898,5 +994,13 @@ button:disabled {
   }
   .memo-card-header {
     flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .artifact-enter,
+  .skeleton-line,
+  .spin {
+    animation: none;
   }
 }

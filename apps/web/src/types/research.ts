@@ -79,11 +79,33 @@ export type ResearchResponse = {
   errors: string[];
 };
 
-export type ResearchPhaseId = 'validate' | 'evidence' | 'memo' | 'verify';
-
 export type ResearchEvent =
   | { type: 'run.started'; ticker: string; secDataMode: SecDataMode }
   | { type: 'stage.started'; stage: string }
   | { type: 'stage.completed'; stage: string }
+  | {
+      type: 'sec.completed';
+      companyName?: string;
+      fundamentals?: Fundamentals;
+      sources: Source[];
+      errors: string[];
+    }
+  | {
+      type: 'market.completed';
+      snapshot?: MarketSnapshot;
+      sources: Source[];
+      errors: string[];
+    }
+  | {
+      type: 'analyst.completed';
+      report?: AnalystReport;
+      errors: string[];
+    }
+  | { type: 'draft.completed'; errors: string[] }
+  | {
+      type: 'challenge.completed';
+      report?: ChallengeReport;
+      errors: string[];
+    }
   | { type: 'run.completed'; result: ResearchResponse }
   | { type: 'run.failed'; message: string };

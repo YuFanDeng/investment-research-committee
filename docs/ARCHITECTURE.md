@@ -3,7 +3,7 @@
 This diagram shows the path from a ticker search to a source-backed committee memo.
 
 ```mermaid
-flowchart LR
+flowchart TB
     User[Investor / interviewer] --> Web[React + Vite dashboard]
     Web -->|POST /research/stream| API[Hono API]
     API --> Graph[LangGraph.js research graph]
@@ -28,7 +28,7 @@ flowchart LR
     Chair --> Memo[Source-backed memo]
     Memo --> API
 
-    Graph -. stage events .-> API
+    Graph -. lifecycle and artifact events .-> API
     API -. Server-Sent Events .-> Web
     Web --> Render[Timeline, chart, analyst cards, memo]
 

@@ -1,6 +1,19 @@
-import type { ResearchEvent, ResearchResponse, SecDataMode } from '../types/research';
+import type {
+  AnalystReport,
+  ChallengeReport,
+  Fundamentals,
+  MarketSnapshot,
+  ResearchEvent,
+  ResearchResponse,
+  SecDataMode,
+  Source,
+} from '../types/research';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8787';
+
+function eventArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
 
 export async function runResearch(
   ticker: string,
@@ -78,6 +91,48 @@ export async function runResearchStream(
       typeof payload.stage === 'string'
     ) {
       onEvent({ type: eventName, stage: payload.stage });
+      return;
+    }
+    if (eventName === 'sec.completed') {
+      onEvent({
+        type: 'sec.completed',
+        companyName: typeof payload.companyName === 'string' ? payload.companyName : undefined,
+        fundamentals: payload.fundamentals as Fundamentals | undefined,
+        sources: eventArray<Source>(payload.sources),
+        errors: eventArray<string>(payload.errors),
+      });
+      return;
+    }
+    if (eventName === 'market.completed') {
+      onEvent({
+        type: 'market.completed',
+        snapshot: payload.snapshot as MarketSnapshot | undefined,
+        sources: eventArray<Source>(payload.sources),
+        errors: eventArray<string>(payload.errors),
+      });
+      return;
+    }
+    if (eventName === 'analyst.completed') {
+      onEvent({
+        type: 'analyst.completed',
+        report: payload.report as AnalystReport | undefined,
+        errors: eventArray<string>(payload.errors),
+      });
+      return;
+    }
+    if (eventName === 'draft.completed') {
+      onEvent({
+        type: 'draft.completed',
+        errors: eventArray<string>(payload.errors),
+      });
+      return;
+    }
+    if (eventName === 'challenge.completed') {
+      onEvent({
+        type: 'challenge.completed',
+        report: payload.report as ChallengeReport | undefined,
+        errors: eventArray<string>(payload.errors),
+      });
     }
   }
 

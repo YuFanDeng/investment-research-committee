@@ -1,7 +1,13 @@
 import { useState } from 'react';
 
 import { runResearchStream } from '../lib/research-api';
-import type { ResearchEvent, ResearchResponse, SecDataMode } from '../types/research';
+import type {
+  AnalystReport,
+  ResearchEvent,
+  ResearchResponse,
+  SecDataMode,
+  Source,
+} from '../types/research';
 
 const STAGE_LABELS: Record<string, string> = {
   validateTicker: 'Validating ticker with the API…',
@@ -36,10 +42,23 @@ function initialStageStatuses() {
   >;
 }
 
+function mergeSources(current: Source[], incoming: Source[]) {
+  return [...new Map([...current, ...incoming].map((source) => [source.id, source])).values()];
+}
+
+function mergeErrors(current: string[], incoming: string[]) {
+  return [...new Set([...current, ...incoming])];
+}
+
+function upsertAnalystReport(current: AnalystReport[], incoming: AnalystReport) {
+  return [...current.filter((report) => report.role !== incoming.role), incoming];
+}
+
 export function useResearch() {
   const [result, setResult] = useState<ResearchResponse>();
   const [error, setError] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
+  const [isDraftReady, setIsDraftReady] = useState(false);
   const [statusMessage, setStatusMessage] = useState('Ready to start research.');
   const [stageStatuses, setStageStatuses] = useState(initialStageStatuses);
 
@@ -52,8 +71,57 @@ export function useResearch() {
     } else if (event.type === 'stage.completed') {
       setStatusMessage(`${STAGE_LABELS[event.stage] ?? event.stage} complete.`);
       setStageStatuses((current) => ({ ...current, [event.stage]: 'complete' }));
+    } else if (event.type === 'sec.completed') {
+      setResult((current) =>
+        current
+          ? {
+              ...current,
+              companyName: event.companyName ?? current.companyName,
+              fundamentals: event.fundamentals ?? current.fundamentals,
+              sources: mergeSources(current.sources, event.sources),
+              errors: mergeErrors(current.errors, event.errors),
+            }
+          : current,
+      );
+    } else if (event.type === 'market.completed') {
+      setResult((current) =>
+        current
+          ? {
+              ...current,
+              marketSnapshot: event.snapshot ?? current.marketSnapshot,
+              sources: mergeSources(current.sources, event.sources),
+              errors: mergeErrors(current.errors, event.errors),
+            }
+          : current,
+      );
+    } else if (event.type === 'analyst.completed' && event.report) {
+      setResult((current) =>
+        current
+          ? {
+              ...current,
+              analystReports: upsertAnalystReport(current.analystReports, event.report!),
+              errors: mergeErrors(current.errors, event.errors),
+            }
+          : current,
+      );
+    } else if (event.type === 'draft.completed') {
+      setIsDraftReady(true);
+      setResult((current) =>
+        current ? { ...current, errors: mergeErrors(current.errors, event.errors) } : current,
+      );
+    } else if (event.type === 'challenge.completed') {
+      setResult((current) =>
+        current
+          ? {
+              ...current,
+              challengeReport: event.report ?? current.challengeReport,
+              errors: mergeErrors(current.errors, event.errors),
+            }
+          : current,
+      );
     } else if (event.type === 'run.completed') {
       setStatusMessage('Research complete.');
+      setResult(event.result);
     } else if (event.type === 'run.failed') {
       setStatusMessage('Research stream failed.');
     }
@@ -62,11 +130,20 @@ export function useResearch() {
   async function submitResearch(ticker: string, secDataMode: SecDataMode) {
     setIsLoading(true);
     setError(undefined);
+    setIsDraftReady(false);
+    setResult({
+      ticker,
+      secDataMode,
+      status: 'researching',
+      analystReports: [],
+      sources: [],
+      errors: [],
+    });
     setStageStatuses(initialStageStatuses());
     setStatusMessage('Connecting to the research API…');
 
     try {
-      setResult(await runResearchStream(ticker, secDataMode, handleEvent));
+      await runResearchStream(ticker, secDataMode, handleEvent);
     } catch (caughtError) {
       setError(
         caughtError instanceof Error ? caughtError.message : 'An unexpected error occurred.',
@@ -76,5 +153,13 @@ export function useResearch() {
     }
   }
 
-  return { error, isLoading, result, stageStatuses, statusMessage, submitResearch };
+  return {
+    error,
+    isDraftReady,
+    isLoading,
+    result,
+    stageStatuses,
+    statusMessage,
+    submitResearch,
+  };
 }

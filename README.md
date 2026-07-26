@@ -14,6 +14,45 @@ The project provides a complete multi-agent research demo:
 
 Local Ollama generation is optional; deterministic fallbacks keep the workflow usable when the model is unavailable.
 
+## Architecture
+
+```mermaid
+flowchart TB
+    User[Investor / interviewer] --> Web[React + Vite dashboard]
+    Web -->|POST /research/stream| API[Hono API]
+    API --> Graph[LangGraph.js research graph]
+
+    Graph --> Validate[Validate ticker]
+    Validate --> SEC[SEC EDGAR adapter]
+    Validate --> Massive[Massive market adapter]
+
+    SEC --> Evidence[Shared evidence state]
+    Massive --> Evidence
+    Evidence --> Analysts[Parallel analyst nodes]
+
+    Analysts --> Fundamentals[Fundamentals analyst]
+    Analysts --> Business[Business quality analyst]
+    Analysts --> Valuation[Valuation analyst]
+
+    Fundamentals --> Draft[Committee chair draft]
+    Business --> Draft
+    Valuation --> Draft
+    Draft --> Skeptic[Skeptic challenge]
+    Skeptic --> Chair[Final chair synthesis]
+    Chair --> Memo[Source-backed memo]
+    Memo --> API
+
+    Graph -. lifecycle and artifact events .-> API
+    API -. Server-Sent Events .-> Web
+    Web --> Render[Timeline, chart, analyst cards, memo]
+
+    Ollama[(Local Ollama model)] -. structured output .-> Analysts
+    Ollama -. chair and skeptic output .-> Draft
+    Ollama -. chair and skeptic output .-> Chair
+```
+
+See [Interview Demo Architecture](docs/ARCHITECTURE.md) for the accompanying design notes and interview talking points.
+
 ## Prerequisites
 
 - Node.js 22 or later

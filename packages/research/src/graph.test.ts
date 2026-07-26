@@ -64,4 +64,39 @@ describe('research committee graph', () => {
     expect(result.memo?.financialHighlights[0]).toContain('FY2025 revenue');
     expect(result.errors.some((error) => error.includes('deterministic SEC facts'))).toBe(true);
   });
+
+  it('streams node updates for progressive UI artifacts', async () => {
+    const graph = createTestGraph(async () => ({
+      companySnapshot: 'Test Company reported annual results.',
+      financialHighlights: ['Revenue was $100.'],
+      whatStandsOut: ['Operating cash flow was positive.'],
+      risksAndLimitations: ['This is educational research.'],
+      sourceIdsUsed: ['sec-test-source'],
+      disclaimer: 'For educational research only.',
+    }));
+    const stream = await graph.stream({ ticker: 'TEST' }, {
+      streamMode: ['values', 'updates', 'tasks'],
+    } as never);
+    const updatedNodes = new Set<string>();
+
+    for await (const chunk of stream as AsyncIterable<unknown>) {
+      if (!Array.isArray(chunk) || chunk[0] !== 'updates') continue;
+      const update = chunk[1] as Record<string, unknown>;
+      Object.keys(update).forEach((node) => updatedNodes.add(node));
+    }
+
+    expect(updatedNodes).toEqual(
+      new Set([
+        'validateTicker',
+        'fetchSecFundamentals',
+        'fetchMarketData',
+        'fundamentalsAnalyst',
+        'businessQualityAnalyst',
+        'valuationAnalyst',
+        'committeeDraft',
+        'skepticChallenge',
+        'committeeChair',
+      ]),
+    );
+  });
 });

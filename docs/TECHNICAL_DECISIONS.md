@@ -15,6 +15,7 @@ This document records the initial implementation choices for the Investment Rese
 | Market data provider    | Massive                                           | Documented TypeScript-friendly API with a free end-of-day tier suitable for the valuation analyst demo.              |
 | Code formatting         | Prettier                                          | Keeps source files consistently readable and reduces formatting noise in reviews.                                    |
 | Progress transport      | Server-Sent Events                                | Streams one LangGraph run to the React UI without making the browser orchestrate internal agents.                    |
+| Partial-result delivery | Typed SSE artifact events                         | Reveals SEC, market, analyst, and skeptic results as nodes finish while preserving one authoritative final response. |
 | UI icons                | lucide-react                                      | Provides a consistent, lightweight icon vocabulary for workflow, evidence, and market states.                        |
 | Price chart             | Recharts                                          | Renders the historical closes already returned by Massive without introducing a second charting abstraction.         |
 | UI component strategy   | Domain components + CSS tokens                    | Keeps the dashboard visually distinctive and makes the frontend architecture easy to explain in an interview.        |
@@ -58,6 +59,7 @@ The first graph validates a U.S. ticker using Zod, then performs these determini
 - Stream workflow status to the client when needed.
 - Return the final memo, evidence, and source list.
 - Stream stage and task lifecycle events through `/research/stream`.
+- Stream selected structured artifacts without exposing the graph's complete internal state.
 - Keep API keys and third-party calls on the server.
 
 ## Validation boundaries

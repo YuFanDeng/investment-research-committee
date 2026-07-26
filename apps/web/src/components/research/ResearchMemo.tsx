@@ -8,6 +8,8 @@ import { MetricCard } from './MetricCard';
 
 type ResearchMemoProps = {
   result: ResearchResponse;
+  isDraftReady: boolean;
+  isLoading: boolean;
 };
 
 function formatBillions(value: number) {
@@ -63,9 +65,35 @@ function MemoSection({
   );
 }
 
-export function ResearchMemo({ result }: ResearchMemoProps) {
+export function ResearchMemo({ result, isDraftReady, isLoading }: ResearchMemoProps) {
   const memo: ResearchMemoData | undefined = result.memo;
-  if (!memo) return null;
+  if (!memo) {
+    if (!isLoading) return null;
+
+    return (
+      <article className="memo-card research-memo-card pending-result-card">
+        <div className="memo-card-header">
+          <div>
+            <span className="section-kicker">Research memo</span>
+            <h2>{result.companyName ?? result.ticker}</h2>
+          </div>
+          <span className="artifact-status is-active">
+            {isDraftReady ? 'Under review' : 'Preparing'}
+          </span>
+        </div>
+        <div className="artifact-placeholder" role="status">
+          <span className="skeleton-line skeleton-line-wide" />
+          <span className="skeleton-line" />
+          <span className="skeleton-line skeleton-line-short" />
+          <p>
+            {isDraftReady
+              ? 'The chair draft is complete and remains hidden while the skeptic reviews it.'
+              : 'The final memo will appear after the analysts, chair, and skeptic finish.'}
+          </p>
+        </div>
+      </article>
+    );
+  }
 
   return (
     <article className="memo-card research-memo-card">

@@ -5,6 +5,7 @@ import { AppShell } from './components/layout/AppShell';
 import { CommitteePanel } from './components/research/CommitteePanel';
 import { EmptyResearchState } from './components/research/EmptyResearchState';
 import { EvidencePanel } from './components/research/EvidencePanel';
+import { FundamentalsSnapshotPanel } from './components/research/FundamentalsSnapshotPanel';
 import { ResearchMemo } from './components/research/ResearchMemo';
 import { ResearchProgress } from './components/research/ResearchProgress';
 import { TickerSearch } from './components/research/TickerSearch';
@@ -17,7 +18,8 @@ export default function App() {
   const [ticker, setTicker] = useState('AAPL');
   const isDevelopment = import.meta.env.DEV;
   const [secDataMode, setSecDataMode] = useState<SecDataMode>(isDevelopment ? 'fixture' : 'live');
-  const { error, isLoading, result, stageStatuses, statusMessage, submitResearch } = useResearch();
+  const { error, isDraftReady, isLoading, result, stageStatuses, statusMessage, submitResearch } =
+    useResearch();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -72,13 +74,29 @@ export default function App() {
         statusMessage={statusMessage}
       />
 
-      {result?.memo ? (
+      {result ? (
         <section className="results-layout">
-          <MarketSnapshotPanel snapshot={result.marketSnapshot} />
-          <ResearchMemo result={result} />
-          <CommitteePanel reports={result.analystReports} />
-          <SkepticPanel report={result.challengeReport} />
-          <EvidencePanel sources={result.sources} />
+          <MarketSnapshotPanel
+            snapshot={result.marketSnapshot}
+            status={stageStatuses.fetchMarketData ?? 'waiting'}
+          />
+          <FundamentalsSnapshotPanel
+            companyName={result.companyName}
+            fundamentals={result.fundamentals}
+            status={stageStatuses.fetchSecFundamentals ?? 'waiting'}
+          />
+          <CommitteePanel
+            reports={result.analystReports}
+            isLoading={isLoading}
+            stageStatuses={stageStatuses}
+          />
+          <ResearchMemo result={result} isDraftReady={isDraftReady} isLoading={isLoading} />
+          <EvidencePanel sources={result.sources} isLoading={isLoading} />
+          <SkepticPanel
+            report={result.challengeReport}
+            isLoading={isLoading}
+            status={stageStatuses.skepticChallenge ?? 'waiting'}
+          />
         </section>
       ) : (
         <EmptyResearchState />

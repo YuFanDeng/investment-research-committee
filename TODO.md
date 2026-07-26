@@ -15,6 +15,7 @@ React dashboard.
 - [x] Compact market history before sending evidence to analyst prompts.
 - [x] Add synchronous and Server-Sent Events research endpoints.
 - [x] Add a visual node-level streaming timeline to the React UI.
+- [x] Stream and render partial SEC, market, analyst, and skeptic artifacts as nodes finish.
 - [x] Add a market snapshot with historical price chart and peer comparison.
 - [x] Add technical decision, testing, streaming, market-data, UI, and architecture documentation.
 - [x] Add formatting, type checking, tests, and production build checks.
