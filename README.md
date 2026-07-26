@@ -4,14 +4,15 @@ A source-backed, educational equity-research workflow built with React, Vite, Ho
 
 ## Current milestone
 
-The scaffold provides a complete fundamentals-research vertical slice:
+The project provides a complete multi-agent research demo:
 
 1. Enter a U.S. ticker in the React dashboard.
-2. Send it to the Hono API.
-3. Resolve the company CIK and retrieve annual fundamentals from SEC EDGAR.
-4. Display a structured research memo and source trail.
+2. Stream LangGraph node progress through the Hono API with Server-Sent Events.
+3. Retrieve SEC EDGAR fundamentals and Massive end-of-day market context.
+4. Run fundamentals, business quality, and valuation analysts with a chair draft and skeptic challenge.
+5. Display a historical price chart, analyst reports, source trail, and final memo.
 
-Local Ollama memo generation is the next integration.
+Local Ollama generation is optional; deterministic fallbacks keep the workflow usable when the model is unavailable.
 
 ## Prerequisites
 
@@ -50,3 +51,8 @@ pnpm format:check  # Verify formatting without changing files
 
 - [Project plan](docs/PROJECT_PLAN.md)
 - [Technical decisions](docs/TECHNICAL_DECISIONS.md)
+- [UI decisions](docs/UI_DECISIONS.md)
+- [Streaming design](docs/STREAMING.md)
+- [Market-data provider](docs/MARKET_DATA_PROVIDER.md)
+- [Testing strategy](docs/TESTING.md)
+- [Interview architecture](docs/ARCHITECTURE.md)

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildAnalystMessages } from './committee.js';
+import { buildAnalystMessages, buildFinalChairMessages } from './committee.js';
 
 describe('committee prompt evidence', () => {
   it('sends compact market metrics instead of raw historical bars', () => {
@@ -33,5 +33,45 @@ describe('committee prompt evidence', () => {
     expect(humanMessage).toContain('oneYearReturn');
     expect(humanMessage).toContain('annualizedVolatility');
     expect(humanMessage).toContain('maximumDrawdown');
+  });
+
+  it('keeps the final chair prompt focused on review artifacts', () => {
+    const [, [, humanMessage]] = buildFinalChairMessages({
+      ticker: 'TEST',
+      companyName: 'Test Company',
+      analystReports: [
+        {
+          role: 'valuation',
+          thesis: 'The evidence supports a cautious valuation view.',
+          supportingEvidence: ['Market context is available.'],
+          concerns: ['Multiples are incomplete.'],
+          confidence: 0.6,
+          sourceIdsUsed: ['market-test'],
+        },
+      ],
+      draftMemo: {
+        companySnapshot: 'Test Company reported a compact snapshot.',
+        financialHighlights: ['Revenue is available.'],
+        whatStandsOut: ['Cash flow is positive.'],
+        risksAndLimitations: ['The evidence is limited.'],
+        sourceIdsUsed: ['sec-test'],
+        disclaimer: 'For educational research only.',
+      },
+      challengeReport: {
+        thesisWeaknesses: ['The sample is narrow.'],
+        unsupportedClaims: [],
+        missingEvidence: ['More filings are needed.'],
+        keyRisks: ['Market conditions can change.'],
+        requiredRevisions: ['Keep uncertainty visible.'],
+        confidence: 0.8,
+        sourceIdsUsed: ['sec-test'],
+      },
+      sourceIds: ['sec-test', 'market-test'],
+    });
+
+    expect(humanMessage).toContain('draftMemo');
+    expect(humanMessage).toContain('challengeReport');
+    expect(humanMessage).not.toContain('fundamentals');
+    expect(humanMessage).not.toContain('historicalCloses');
   });
 });

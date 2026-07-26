@@ -17,7 +17,7 @@ export default function App() {
   const [ticker, setTicker] = useState('AAPL');
   const isDevelopment = import.meta.env.DEV;
   const [secDataMode, setSecDataMode] = useState<SecDataMode>(isDevelopment ? 'fixture' : 'live');
-  const { activePhase, error, isLoading, result, statusMessage, submitResearch } = useResearch();
+  const { error, isLoading, result, stageStatuses, statusMessage, submitResearch } = useResearch();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -66,19 +66,19 @@ export default function App() {
       ) : null}
 
       <ResearchProgress
-        activePhase={activePhase}
         isLoading={isLoading}
         hasResult={Boolean(result?.memo)}
+        stageStatuses={stageStatuses}
         statusMessage={statusMessage}
       />
 
       {result?.memo ? (
         <section className="results-layout">
-          <ResearchMemo result={result} />
-          <EvidencePanel sources={result.sources} />
-          <CommitteePanel reports={result.analystReports} />
           <MarketSnapshotPanel snapshot={result.marketSnapshot} />
+          <ResearchMemo result={result} />
+          <CommitteePanel reports={result.analystReports} />
           <SkepticPanel report={result.challengeReport} />
+          <EvidencePanel sources={result.sources} />
         </section>
       ) : (
         <EmptyResearchState />

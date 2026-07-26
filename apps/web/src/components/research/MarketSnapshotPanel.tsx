@@ -1,4 +1,11 @@
+import { lazy, Suspense } from 'react';
+
 import type { MarketSnapshot } from '../../types/research';
+import { BarChart3, Clock3, ExternalLink, TrendingUp, Users } from 'lucide-react';
+
+const PriceChart = lazy(() =>
+  import('./PriceChart').then(({ PriceChart: Chart }) => ({ default: Chart })),
+);
 
 type MarketSnapshotPanelProps = {
   snapshot?: MarketSnapshot;
@@ -22,17 +29,23 @@ export function MarketSnapshotPanel({ snapshot }: MarketSnapshotPanelProps) {
     <section className="market-snapshot-panel" aria-labelledby="market-snapshot-heading">
       <div className="evidence-heading">
         <div>
-          <span className="section-kicker">Market context</span>
+          <span className="section-kicker">
+            <BarChart3 size={13} /> Market context
+          </span>
           <h2 id="market-snapshot-heading">Price & peer snapshot</h2>
         </div>
-        <span className="source-count">EOD</span>
+        <span className="data-pill">
+          <Clock3 size={12} /> EOD
+        </span>
       </div>
       <p className="panel-description">
         Normalized from Massive and timestamped {new Date(snapshot.retrievedAt).toLocaleString()}.
       </p>
-      <div className="metric-grid">
+      <div className="metric-grid market-metrics">
         <div className="metric-card">
-          <span className="metric-label">Previous close</span>
+          <span className="metric-label">
+            <TrendingUp size={13} /> Previous close
+          </span>
           <strong>
             {snapshot.currency.toUpperCase()} {snapshot.currentPrice.toFixed(2)}
           </strong>
@@ -46,15 +59,22 @@ export function MarketSnapshotPanel({ snapshot }: MarketSnapshotPanelProps) {
           <strong>{formatBillions(snapshot.marketCap)}</strong>
         </div>
       </div>
+      <Suspense fallback={<div className="price-chart chart-loading">Preparing price path…</div>}>
+        <PriceChart snapshot={snapshot} />
+      </Suspense>
       {snapshot.peers.length ? (
         <div className="peer-list">
-          <span className="analyst-label">Related companies</span>
+          <span className="analyst-label">
+            <Users size={13} /> Related companies
+          </span>
           <div className="peer-grid">
             {snapshot.peers.map((peer) => (
               <div className="peer-item" key={peer.ticker}>
                 <strong>{peer.ticker}</strong>
                 <span>{peer.name ?? 'Related company'}</span>
-                <small>{formatBillions(peer.marketCap)} market cap</small>
+                <small>
+                  {formatBillions(peer.marketCap)} market cap <ExternalLink size={11} />
+                </small>
               </div>
             ))}
           </div>

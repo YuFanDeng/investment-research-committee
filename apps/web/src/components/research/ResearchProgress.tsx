@@ -1,26 +1,24 @@
-import type { ResearchPhaseId } from '../../types/research';
+import { Check, Circle, LoaderCircle } from 'lucide-react';
 
-const PHASES: { id: ResearchPhaseId; label: string; detail: string }[] = [
-  { id: 'validate', label: 'Validate ticker', detail: 'Resolving company identity' },
-  { id: 'evidence', label: 'Retrieve evidence', detail: 'Reading SEC EDGAR facts' },
-  { id: 'memo', label: 'Write memo', detail: 'Preparing structured analysis' },
-  { id: 'verify', label: 'Verify sources', detail: 'Checking evidence trail' },
-];
+import { RESEARCH_STAGES, type ResearchStageStatus } from '../../hooks/use-research';
 
 type ResearchProgressProps = {
-  activePhase: ResearchPhaseId;
   isLoading: boolean;
   hasResult: boolean;
   statusMessage: string;
+  stageStatuses: Record<string, ResearchStageStatus>;
 };
 
 export function ResearchProgress({
-  activePhase,
   isLoading,
   hasResult,
+  stageStatuses,
   statusMessage,
 }: ResearchProgressProps) {
-  const activeIndex = PHASES.findIndex((phase) => phase.id === activePhase);
+  const completedStages = Object.values(stageStatuses).filter(
+    (status) => status === 'complete',
+  ).length;
+  const progressPercent = hasResult ? 100 : (completedStages / RESEARCH_STAGES.length) * 100;
 
   return (
     <section className="progress-panel" aria-label="Research workflow progress">
@@ -34,32 +32,31 @@ export function ResearchProgress({
         {statusMessage}
       </p>
       <div className="progress-track" aria-hidden="true">
-        <span
-          style={{
-            width: `${hasResult ? 100 : isLoading ? ((activeIndex + 1) / PHASES.length) * 100 : 0}%`,
-          }}
-        />
+        <span style={{ width: `${isLoading || hasResult ? progressPercent : 0}%` }} />
       </div>
-      <ol className="phase-list">
-        {PHASES.map((phase, index) => {
-          const isComplete = hasResult || (isLoading && index < activeIndex);
-          const isActive = isLoading && phase.id === activePhase;
+      <div className="stage-timeline" aria-label="Detailed research stages">
+        {RESEARCH_STAGES.map((stage, index) => {
+          const status = hasResult ? 'complete' : (stageStatuses[stage.id] ?? 'waiting');
+          const Icon = status === 'complete' ? Check : status === 'active' ? LoaderCircle : Circle;
           return (
-            <li
-              className={`${isActive ? 'is-active' : ''} ${isComplete ? 'is-complete' : ''}`}
-              key={phase.id}
-            >
-              <span className="phase-icon">
-                {isComplete ? '✓' : isActive ? '·' : String(index + 1).padStart(2, '0')}
+            <div className={`stage-item is-${status}`} key={stage.id}>
+              {index === 0 || RESEARCH_STAGES[index - 1].phase !== stage.phase ? (
+                <span className="stage-phase-label">{stage.phase}</span>
+              ) : null}
+              <div className="stage-connector" aria-hidden="true">
+                {index < RESEARCH_STAGES.length - 1 ? <span /> : null}
+              </div>
+              <span className="stage-icon" aria-hidden="true">
+                <Icon className={status === 'active' ? 'spin' : undefined} size={15} />
               </span>
-              <span>
-                <strong>{phase.label}</strong>
-                <small>{phase.detail}</small>
+              <span className="stage-copy">
+                <strong>{stage.label}</strong>
+                <small>{status === 'active' ? 'Working now' : status}</small>
               </span>
-            </li>
+            </div>
           );
         })}
-      </ol>
+      </div>
     </section>
   );
 }

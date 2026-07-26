@@ -4,17 +4,21 @@ This document records the initial implementation choices for the Investment Rese
 
 ## Locked-in stack
 
-| Area                    | Decision           | Why                                                                                                                  |
-| ----------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| Frontend                | React + TypeScript | Matches the team's frontend strengths and supports a polished, interactive research dashboard.                       |
-| Build tooling           | Vite               | Fast local development and a lightweight SPA setup. Server-side rendering is not required for the initial dashboard. |
-| API server              | Hono + TypeScript  | A small HTTP layer for starting and resuming research runs, streaming progress, and protecting API keys.             |
-| Agent orchestration     | LangGraph.js       | Keeps the workflow, graph state, conditional routing, critique, and later human approval in TypeScript.              |
-| Runtime validation      | Zod                | Validates untrusted runtime data and infers TypeScript types from the same schemas.                                  |
-| Primary evidence source | SEC EDGAR          | Provides authoritative U.S. company filing and financial data.                                                       |
-| Market data provider    | Massive            | Documented TypeScript-friendly API with a free end-of-day tier suitable for the valuation analyst demo.              |
-| Code formatting         | Prettier           | Keeps source files consistently readable and reduces formatting noise in reviews.                                    |
-| Progress transport      | Server-Sent Events | Streams one LangGraph run to the React UI without making the browser orchestrate internal agents.                    |
+| Area                    | Decision                                          | Why                                                                                                                  |
+| ----------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Frontend                | React + TypeScript                                | Matches the team's frontend strengths and supports a polished, interactive research dashboard.                       |
+| Build tooling           | Vite                                              | Fast local development and a lightweight SPA setup. Server-side rendering is not required for the initial dashboard. |
+| API server              | Hono + TypeScript                                 | A small HTTP layer for starting and resuming research runs, streaming progress, and protecting API keys.             |
+| Agent orchestration     | LangGraph.js                                      | Keeps the workflow, graph state, conditional routing, critique, and later human approval in TypeScript.              |
+| Runtime validation      | Zod                                               | Validates untrusted runtime data and infers TypeScript types from the same schemas.                                  |
+| Primary evidence source | SEC EDGAR                                         | Provides authoritative U.S. company filing and financial data.                                                       |
+| Market data provider    | Massive                                           | Documented TypeScript-friendly API with a free end-of-day tier suitable for the valuation analyst demo.              |
+| Code formatting         | Prettier                                          | Keeps source files consistently readable and reduces formatting noise in reviews.                                    |
+| Progress transport      | Server-Sent Events                                | Streams one LangGraph run to the React UI without making the browser orchestrate internal agents.                    |
+| UI icons                | lucide-react                                      | Provides a consistent, lightweight icon vocabulary for workflow, evidence, and market states.                        |
+| Price chart             | Recharts                                          | Renders the historical closes already returned by Massive without introducing a second charting abstraction.         |
+| UI component strategy   | Domain components + CSS tokens                    | Keeps the dashboard visually distinctive and makes the frontend architecture easy to explain in an interview.        |
+| Ollama context window   | Configurable via `OLLAMA_NUM_CTX`, default `4096` | Keeps local development compatible with the current model while allowing larger-context models later.                |
 
 ## Architecture
 
@@ -29,6 +33,13 @@ SEC EDGAR + Massive market data + LLM
 ```
 
 The frontend owns interaction and visualization. The Hono API server owns secrets and exposes research endpoints. LangGraph.js, data tools, prompts, and shared schemas remain framework-independent TypeScript modules.
+
+## Ollama context and final-chair prompt
+
+The local model context window is controlled through `OLLAMA_NUM_CTX` and defaults to 4096 tokens.
+The final chair receives the draft memo, skeptic challenge, compact analyst conclusions, and source
+IDs rather than the full SEC and market evidence again. This avoids duplicating context that the
+earlier nodes already used while preserving the evidence trail.
 
 ## Ticker validation and SEC fundamentals
 

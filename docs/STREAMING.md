@@ -32,3 +32,7 @@ chair draft, skeptic challenge, and final chair synthesis.
 
 The frontend parses the response stream with `ReadableStream` because native `EventSource`
 only supports GET requests, while research needs a POST body.
+
+The UI presents one detailed timeline grouped into Validate, Evidence, Committee, and Review.
+The earlier four-step summary was removed because it duplicated the node-level timeline without
+adding new information.

@@ -241,12 +241,10 @@ async function writeFinalChairMemo(
       buildFinalChairMessages({
         ticker: state.ticker,
         companyName: state.companyName,
-        fundamentals: state.fundamentals,
-        marketSnapshot: state.marketSnapshot,
-        sources: state.sources,
         analystReports: state.analystReports,
         draftMemo: state.draftMemo,
         challengeReport: state.challengeReport,
+        sourceIds: state.sources.map((source) => source.id),
       }),
       modelEnvironment,
     );

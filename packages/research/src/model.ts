@@ -5,6 +5,7 @@ const ModelSettingsSchema = z.object({
   provider: z.literal('ollama'),
   baseUrl: z.string().url(),
   model: z.string().min(1),
+  numCtx: z.coerce.number().int().positive().default(4096),
 });
 
 export type ModelSettings = z.infer<typeof ModelSettingsSchema>;
@@ -26,6 +27,7 @@ export function getModelSettings(environment: Record<string, string | undefined>
     provider,
     baseUrl: environment.OLLAMA_BASE_URL ?? 'http://localhost:11434',
     model: environment.OLLAMA_MODEL,
+    numCtx: environment.OLLAMA_NUM_CTX,
   });
 }
 
@@ -37,6 +39,7 @@ export function createResearchModel(settings: ModelSettings) {
   return new ChatOllama({
     baseUrl: settings.baseUrl,
     model: settings.model,
+    numCtx: settings.numCtx,
     temperature: 0,
     maxRetries: 2,
   });

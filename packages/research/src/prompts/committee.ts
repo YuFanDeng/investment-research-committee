@@ -1,5 +1,7 @@
 import type {
+  AnalystReport,
   AnalystRole,
+  ChallengeReport,
   Fundamentals,
   MarketSnapshot,
   ResearchMemo,
@@ -123,9 +125,25 @@ export function buildSkepticMessages(
   ];
 }
 
-export function buildFinalChairMessages(
-  evidence: ChairEvidence & { draftMemo: ResearchMemo; challengeReport: unknown },
-): CommitteeMessage[] {
+export function buildFinalChairMessages(evidence: {
+  ticker: string;
+  companyName?: string;
+  analystReports: AnalystReport[];
+  draftMemo: ResearchMemo;
+  challengeReport: ChallengeReport;
+  sourceIds: string[];
+}): CommitteeMessage[] {
+  const compactReports = evidence.analystReports.map(
+    ({ role, thesis, supportingEvidence, concerns, confidence, sourceIdsUsed }) => ({
+      role,
+      thesis,
+      supportingEvidence,
+      concerns,
+      confidence,
+      sourceIdsUsed,
+    }),
+  );
+
   return [
     [
       'system',
@@ -133,7 +151,18 @@ export function buildFinalChairMessages(
     ],
     [
       'human',
-      `Produce the final committee memo for ${evidence.ticker}:\n\n${JSON.stringify(serializeEvidence(evidence), null, 2)}`,
+      `Produce the final committee memo for ${evidence.ticker}. Revise the draft using the challenge report and analyst conclusions below. The source IDs identify the evidence already used; do not request or invent additional facts.\n\n${JSON.stringify(
+        {
+          ticker: evidence.ticker,
+          companyName: evidence.companyName,
+          analystReports: compactReports,
+          draftMemo: evidence.draftMemo,
+          challengeReport: evidence.challengeReport,
+          sourceIds: evidence.sourceIds,
+        },
+        null,
+        2,
+      )}`,
     ],
   ];
 }
