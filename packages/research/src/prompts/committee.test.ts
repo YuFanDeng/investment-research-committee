@@ -67,10 +67,15 @@ describe('committee prompt evidence', () => {
         sourceIdsUsed: ['sec-test'],
       },
       sourceIds: ['sec-test', 'market-test'],
+      humanReview: {
+        decision: 'revise',
+        feedback: 'State the missing evidence more clearly.',
+      },
     });
 
     expect(humanMessage).toContain('draftMemo');
     expect(humanMessage).toContain('challengeReport');
+    expect(humanMessage).toContain('State the missing evidence more clearly.');
     expect(humanMessage).not.toContain('fundamentals');
     expect(humanMessage).not.toContain('historicalCloses');
   });

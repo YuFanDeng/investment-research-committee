@@ -78,7 +78,23 @@ export const ChallengeReportSchema = z.object({
   sourceIdsUsed: z.array(z.string()),
 });
 
+export const HumanReviewDecisionSchema = z
+  .object({
+    decision: z.enum(['approve', 'revise', 'reject']),
+    feedback: z.string().trim().max(2_000).optional(),
+  })
+  .superRefine((value, context) => {
+    if (value.decision === 'revise' && !value.feedback) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['feedback'],
+        message: 'Revision feedback is required.',
+      });
+    }
+  });
+
 export type ResearchRequest = z.infer<typeof ResearchRequestSchema>;
+export type SecDataMode = ResearchRequest['secDataMode'];
 export type Source = z.infer<typeof SourceSchema>;
 export type MarketBar = z.infer<typeof MarketBarSchema>;
 export type PeerComparison = z.infer<typeof PeerComparisonSchema>;
@@ -88,3 +104,13 @@ export type ResearchMemo = z.infer<typeof ResearchMemoSchema>;
 export type AnalystRole = z.infer<typeof AnalystRoleSchema>;
 export type AnalystReport = z.infer<typeof AnalystReportSchema>;
 export type ChallengeReport = z.infer<typeof ChallengeReportSchema>;
+export type HumanReviewDecision = z.infer<typeof HumanReviewDecisionSchema>;
+
+export type HumanReviewRequest = {
+  type: 'committee_sign_off';
+  ticker: string;
+  companyName?: string;
+  challengeReport: ChallengeReport;
+  warnings: string[];
+  allowedDecisions: HumanReviewDecision['decision'][];
+};

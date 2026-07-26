@@ -20,6 +20,8 @@ This document records the initial implementation choices for the Investment Rese
 | Price chart             | Recharts                                          | Renders the historical closes already returned by Massive without introducing a second charting abstraction.         |
 | UI component strategy   | Domain components + CSS tokens                    | Keeps the dashboard visually distinctive and makes the frontend architecture easy to explain in an interview.        |
 | Ollama context window   | Configurable via `OLLAMA_NUM_CTX`, default `4096` | Keeps local development compatible with the current model while allowing larger-context models later.                |
+| Human review            | LangGraph interrupt after skeptic challenge       | Demonstrates checkpointed pause/resume, explicit user control, and conditional graph routing before publication.     |
+| Demo checkpointing      | LangGraph `MemorySaver`                           | Preserves paused runs by `thread_id` without adding a database; durable persistence remains a later production step. |
 
 ## Architecture
 
@@ -41,6 +43,16 @@ The local model context window is controlled through `OLLAMA_NUM_CTX` and defaul
 The final chair receives the draft memo, skeptic challenge, compact analyst conclusions, and source
 IDs rather than the full SEC and market evidence again. This avoids duplicating context that the
 earlier nodes already used while preserving the evidence trail.
+
+## Human approval boundary
+
+The streaming graph interrupts after the skeptic challenge and before final synthesis. The user can
+approve, request a revision with feedback, or reject the memo. Approve and revise resume the same
+checkpointed run; reject routes directly to the end without publishing a final memo.
+
+The synchronous `/research` endpoint auto-approves for backward compatibility. Human approval is a
+feature of the interactive SSE workflow, where a stable run ID is available for resumption. See
+[Human approval interrupts](HUMAN_APPROVAL.md) for the detailed contract.
 
 ## Ticker validation and SEC fundamentals
 
@@ -91,9 +103,10 @@ These are intentionally out of scope for the first end-to-end milestone:
 - Portfolio tracking and personalized recommendations.
 - Real-time market data.
 - Peer-comparison data beyond the initial market-data snapshot.
-- Human-approval interrupts and background workers.
+- Background workers and durable database-backed checkpoints.
 
-We will add persistence when the single research workflow works reliably, then add specialist agents and a human review checkpoint.
+The demo uses in-memory checkpoints. A production deployment would replace them with a durable
+checkpointer so paused runs survive process restarts and can be tied to authenticated users.
 
 ## First implementation target
 

@@ -52,18 +52,21 @@ export function SkepticPanel({ report, isLoading, status }: SkepticPanelProps) {
       <p className="panel-description">
         An independent review designed to surface weak claims before the final memo is accepted.
       </p>
-      <div className="skeptic-grid">
-        {sections.map(([title, items]) => (
-          <div className="skeptic-section" key={title}>
-            <span className="analyst-label analyst-label-risk">{title}</span>
-            <ul>
-              {items.slice(0, 3).map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+      <details className="skeptic-details" open>
+        <summary>Review challenge findings</summary>
+        <div className="skeptic-grid">
+          {sections.map(([title, items]) => (
+            <div className="skeptic-section" key={title}>
+              <span className="analyst-label analyst-label-risk">{title}</span>
+              <ul>
+                {items.slice(0, 3).map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </details>
     </section>
   );
 }

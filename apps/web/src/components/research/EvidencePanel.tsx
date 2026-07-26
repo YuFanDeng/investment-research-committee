@@ -10,7 +10,7 @@ export function EvidencePanel({ sources, isLoading }: EvidencePanelProps) {
     <aside className="memo-card evidence-panel">
       <div className="section-kicker">Evidence trail</div>
       <div className="evidence-heading">
-        <h2>Sources</h2>
+        <h2 id="sources-heading">Sources</h2>
         <span className="source-count">{sources.length}</span>
       </div>
       <p className="panel-description">Every memo is grounded in a retrievable source.</p>

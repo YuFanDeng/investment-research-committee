@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createResearchGraph } from './graph.js';
+import { createResearchCheckpointer, createResearchGraph, createResumeCommand } from './graph.js';
 
 const secResult = {
   companyName: 'Test Company',
@@ -95,8 +95,76 @@ describe('research committee graph', () => {
         'valuationAnalyst',
         'committeeDraft',
         'skepticChallenge',
+        'humanApproval',
         'committeeChair',
       ]),
     );
+  });
+
+  it('resumes a paused run with human revision feedback', async () => {
+    let finalChairPrompt = '';
+    const graph = createResearchGraph({
+      secContactEmail: 'test@example.com',
+      modelEnvironment: {},
+      secClient: { getFundamentals: async () => secResult },
+      requireHumanApproval: true,
+      checkpointer: createResearchCheckpointer(),
+      invokeMemoModel: async (messages) => {
+        finalChairPrompt = messages.at(-1)?.[1] ?? '';
+        return {
+          companySnapshot: 'The revised committee memo.',
+          financialHighlights: ['Revenue was $100.'],
+          whatStandsOut: ['The reviewer feedback was addressed.'],
+          risksAndLimitations: ['Evidence remains limited.'],
+          sourceIdsUsed: ['sec-test-source'],
+          disclaimer: 'For educational research only.',
+        };
+      },
+    });
+    const config = { configurable: { thread_id: 'revision-test' } };
+
+    const paused = (await graph.invoke({ ticker: 'TEST' }, config)) as unknown as Record<
+      string,
+      unknown
+    >;
+    expect(paused.__interrupt__).toBeDefined();
+
+    const result = await graph.invoke(
+      createResumeCommand({
+        decision: 'revise',
+        feedback: 'Make the evidence limitations more prominent.',
+      }),
+      config,
+    );
+
+    expect(result.status).toBe('complete');
+    expect(result.memo?.companySnapshot).toBe('The revised committee memo.');
+    expect(finalChairPrompt).toContain('Make the evidence limitations more prominent.');
+  });
+
+  it('ends a rejected run without publishing a final memo', async () => {
+    let finalChairCalls = 0;
+    const graph = createResearchGraph({
+      secContactEmail: 'test@example.com',
+      modelEnvironment: {},
+      secClient: { getFundamentals: async () => secResult },
+      requireHumanApproval: true,
+      checkpointer: createResearchCheckpointer(),
+      invokeMemoModel: async () => {
+        finalChairCalls += 1;
+        return {};
+      },
+    });
+    const config = { configurable: { thread_id: 'rejection-test' } };
+
+    await graph.invoke({ ticker: 'TEST' }, config);
+    const result = await graph.invoke(
+      createResumeCommand({ decision: 'reject', feedback: 'Insufficient evidence.' }),
+      config,
+    );
+
+    expect(result.status).toBe('rejected');
+    expect(result.memo).toBeUndefined();
+    expect(finalChairCalls).toBe(0);
   });
 });

@@ -6,6 +6,7 @@ import type {
   MarketSnapshot,
   ResearchMemo,
   Source,
+  HumanReviewDecision,
 } from '../schemas.js';
 
 export const ANALYST_SYSTEM_PROMPTS: Record<AnalystRole, string> = {
@@ -132,6 +133,7 @@ export function buildFinalChairMessages(evidence: {
   draftMemo: ResearchMemo;
   challengeReport: ChallengeReport;
   sourceIds: string[];
+  humanReview?: HumanReviewDecision;
 }): CommitteeMessage[] {
   const compactReports = evidence.analystReports.map(
     ({ role, thesis, supportingEvidence, concerns, confidence, sourceIdsUsed }) => ({
@@ -147,7 +149,7 @@ export function buildFinalChairMessages(evidence: {
   return [
     [
       'system',
-      'You are the final chair of an equity research committee. Revise the draft using the skeptic challenge. Preserve uncertainty, use only supplied evidence, and do not provide personalized investment advice. Return only the requested structured memo.',
+      'You are the final chair of an equity research committee. Revise the draft using the skeptic challenge and any human reviewer feedback. Preserve uncertainty, use only supplied evidence, and do not provide personalized investment advice. Return only the requested structured memo.',
     ],
     [
       'human',
@@ -158,6 +160,7 @@ export function buildFinalChairMessages(evidence: {
           analystReports: compactReports,
           draftMemo: evidence.draftMemo,
           challengeReport: evidence.challengeReport,
+          humanReview: evidence.humanReview,
           sourceIds: evidence.sourceIds,
         },
         null,

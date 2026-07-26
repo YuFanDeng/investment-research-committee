@@ -1,4 +1,10 @@
-export { createResearchGraph } from './graph.js';
+export { createResearchCheckpointer, createResearchGraph, createResumeCommand } from './graph.js';
+export type {
+  ResearchGraph,
+  ResearchGraphInput,
+  ResearchGraphOptions,
+  ResearchGraphResult,
+} from './graph.js';
 export { createResearchModel, getModelSettings } from './model.js';
 export { buildMemoWriterMessages, MEMO_WRITER_SYSTEM_PROMPT } from './prompts/memo-writer.js';
 export {
@@ -14,6 +20,7 @@ export {
   AnalystReportSchema,
   AnalystRoleSchema,
   ChallengeReportSchema,
+  HumanReviewDecisionSchema,
   MarketBarSchema,
   MarketSnapshotSchema,
   PeerComparisonSchema,
@@ -31,5 +38,8 @@ export type {
   PeerComparison,
   ResearchMemo,
   ResearchRequest,
+  SecDataMode,
   Source,
+  HumanReviewDecision,
+  HumanReviewRequest,
 } from './schemas.js';

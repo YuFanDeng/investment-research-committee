@@ -10,6 +10,7 @@ type TickerSearchProps = {
   isDevelopment: boolean;
   secDataMode: SecDataMode;
   onSecDataModeChange: (mode: SecDataMode) => void;
+  compact?: boolean;
 };
 
 export function TickerSearch({
@@ -20,13 +21,20 @@ export function TickerSearch({
   isDevelopment,
   secDataMode,
   onSecDataModeChange,
+  compact = false,
 }: TickerSearchProps) {
   return (
-    <form className="ticker-form" onSubmit={onSubmit}>
-      <div className="field-label-row">
-        <label htmlFor="ticker">Research a company</label>
-        <span>U.S. equities · SEC EDGAR</span>
-      </div>
+    <form className={`ticker-form ${compact ? 'ticker-form-compact' : ''}`} onSubmit={onSubmit}>
+      {compact ? (
+        <label className="sr-only" htmlFor="ticker">
+          Research another company
+        </label>
+      ) : (
+        <div className="field-label-row">
+          <label htmlFor="ticker">Research a company</label>
+          <span>U.S. equities · SEC EDGAR</span>
+        </div>
+      )}
       <div className="ticker-input-row">
         <div className="ticker-input-wrap">
           <span className="ticker-prefix">$</span>
@@ -68,7 +76,9 @@ export function TickerSearch({
           </label>
         </fieldset>
       ) : null}
-      <p className="form-hint">Try AAPL, MSFT, NVDA, or another listed U.S. ticker.</p>
+      {compact ? null : (
+        <p className="form-hint">Try AAPL, MSFT, NVDA, or another listed U.S. ticker.</p>
+      )}
     </form>
   );
 }

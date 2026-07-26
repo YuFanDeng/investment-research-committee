@@ -10,7 +10,8 @@ The project provides a complete multi-agent research demo:
 2. Stream LangGraph node progress through the Hono API with Server-Sent Events.
 3. Retrieve SEC EDGAR fundamentals and Massive end-of-day market context.
 4. Run fundamentals, business quality, and valuation analysts with a chair draft and skeptic challenge.
-5. Display a historical price chart, analyst reports, source trail, and final memo.
+5. Pause after the skeptic challenge for a human approve, revise, or reject decision.
+6. Display a historical price chart, analyst reports, source trail, and approved final memo.
 
 Local Ollama generation is optional; deterministic fallbacks keep the workflow usable when the model is unavailable.
 
@@ -38,7 +39,9 @@ flowchart TB
     Business --> Draft
     Valuation --> Draft
     Draft --> Skeptic[Skeptic challenge]
-    Skeptic --> Chair[Final chair synthesis]
+    Skeptic --> Approval{Human committee sign-off}
+    Approval -->|Approve or revise| Chair[Final chair synthesis]
+    Approval -->|Reject| Rejected[End without publishing]
     Chair --> Memo[Source-backed memo]
     Memo --> API
 
@@ -92,6 +95,7 @@ pnpm format:check  # Verify formatting without changing files
 - [Technical decisions](docs/TECHNICAL_DECISIONS.md)
 - [UI decisions](docs/UI_DECISIONS.md)
 - [Streaming design](docs/STREAMING.md)
+- [Human approval interrupts](docs/HUMAN_APPROVAL.md)
 - [Market-data provider](docs/MARKET_DATA_PROVIDER.md)
 - [Testing strategy](docs/TESTING.md)
 - [Interview architecture](docs/ARCHITECTURE.md)

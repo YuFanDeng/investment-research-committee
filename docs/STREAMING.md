@@ -22,11 +22,15 @@ analyst.completed (once per analyst)
   ↓
 draft.completed / challenge.completed
   ↓
+run.interrupted
+  ↓
+run.resumed
+  ↓
 run.completed
 ```
 
 Stages include ticker validation, SEC evidence, Massive market data, the three analysts,
-chair draft, skeptic challenge, and final chair synthesis.
+chair draft, skeptic challenge, human sign-off, and final chair synthesis.
 
 ## Progressive artifacts
 
@@ -42,6 +46,8 @@ state:
 - Each analyst report appears when that analyst completes.
 - The UI announces that the chair draft exists but does not show its contents before review.
 - The skeptic challenge appears before final chair synthesis.
+- `run.interrupted` carries a JSON-serializable review request and stable run ID.
+- A decision sent to the resume endpoint continues the same LangGraph `thread_id`.
 - `run.completed` replaces the accumulated partial state with the authoritative final result.
 
 This keeps one API request and one LangGraph run while avoiding an empty results area during a
@@ -57,6 +63,11 @@ long-running committee workflow.
 
 The frontend parses the response stream with `ReadableStream` because native `EventSource`
 only supports GET requests, while research needs a POST body.
+
+The initial stream may end normally at an interrupt without a final response. The frontend then
+opens a second SSE response with `POST /research/:runId/resume/stream`. The server supplies the
+decision through a LangGraph `Command({ resume })`; it does not replay the completed evidence and
+analyst nodes.
 
 The UI presents one detailed timeline grouped into Validate, Evidence, Committee, and Review.
 The earlier four-step summary was removed because it duplicated the node-level timeline without

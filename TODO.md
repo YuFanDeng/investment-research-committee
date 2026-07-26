@@ -17,7 +17,9 @@ React dashboard.
 - [x] Add a visual node-level streaming timeline to the React UI.
 - [x] Stream and render partial SEC, market, analyst, and skeptic artifacts as nodes finish.
 - [x] Add a market snapshot with historical price chart and peer comparison.
+- [x] Redesign the dashboard as a light workspace with a vertical workflow rail.
 - [x] Add technical decision, testing, streaming, market-data, UI, and architecture documentation.
+- [x] Add a checkpointed human approval interrupt before final chair synthesis.
 - [x] Add formatting, type checking, tests, and production build checks.
 
 ## Next milestones
@@ -25,7 +27,6 @@ React dashboard.
 - [ ] Add screenshot examples and a short evaluation report for the interview demo.
 - [ ] Add stronger analyst evaluation fixtures and regression tests for memo quality.
 - [ ] Add durable run history with a database and LangGraph checkpointer.
-- [ ] Add human approval interrupts before final chair synthesis.
 - [ ] Add richer market-data ranges and explicit valuation multiples when the provider supports them.
 - [ ] Add authentication and portfolio features only if the product scope expands beyond the demo.
 

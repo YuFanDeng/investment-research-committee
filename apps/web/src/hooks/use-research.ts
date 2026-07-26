@@ -1,8 +1,10 @@
 import { useState } from 'react';
 
-import { runResearchStream } from '../lib/research-api';
+import { resumeResearchStream, runResearchStream } from '../lib/research-api';
 import type {
   AnalystReport,
+  HumanReviewDecision,
+  HumanReviewRequest,
   ResearchEvent,
   ResearchResponse,
   SecDataMode,
@@ -18,6 +20,7 @@ const STAGE_LABELS: Record<string, string> = {
   valuationAnalyst: 'Valuation analyst is working…',
   committeeDraft: 'Chair is drafting the committee memo…',
   skepticChallenge: 'Skeptic is challenging the draft…',
+  humanApproval: 'Waiting for committee sign-off…',
   committeeChair: 'Chair is writing the final memo…',
 };
 
@@ -30,6 +33,7 @@ export const RESEARCH_STAGES = [
   { id: 'valuationAnalyst', label: 'Valuation', phase: 'Committee' },
   { id: 'committeeDraft', label: 'Chair draft', phase: 'Committee' },
   { id: 'skepticChallenge', label: 'Skeptic review', phase: 'Review' },
+  { id: 'humanApproval', label: 'Human sign-off', phase: 'Review' },
   { id: 'committeeChair', label: 'Final synthesis', phase: 'Review' },
 ] as const;
 
@@ -61,10 +65,24 @@ export function useResearch() {
   const [isDraftReady, setIsDraftReady] = useState(false);
   const [statusMessage, setStatusMessage] = useState('Ready to start research.');
   const [stageStatuses, setStageStatuses] = useState(initialStageStatuses);
+  const [approvalRequest, setApprovalRequest] = useState<{
+    runId: string;
+    request: HumanReviewRequest;
+  }>();
 
   function handleEvent(event: ResearchEvent) {
     if (event.type === 'run.started') {
       setStatusMessage('API connected. Starting the research workflow…');
+    } else if (event.type === 'run.interrupted') {
+      setApprovalRequest({ runId: event.runId, request: event.request });
+      setStatusMessage('Committee sign-off required before final synthesis.');
+      setStageStatuses((current) => ({ ...current, humanApproval: 'active' }));
+    } else if (event.type === 'run.resumed') {
+      setStatusMessage(
+        event.decision === 'reject'
+          ? 'Ending the run without publishing a memo…'
+          : 'Decision received. Resuming final synthesis…',
+      );
     } else if (event.type === 'stage.started') {
       setStatusMessage(STAGE_LABELS[event.stage] ?? `Working on ${event.stage}…`);
       setStageStatuses((current) => ({ ...current, [event.stage]: 'active' }));
@@ -120,7 +138,12 @@ export function useResearch() {
           : current,
       );
     } else if (event.type === 'run.completed') {
-      setStatusMessage('Research complete.');
+      setApprovalRequest(undefined);
+      setStatusMessage(
+        event.result.status === 'rejected'
+          ? 'Research ended without publishing a final memo.'
+          : 'Research complete.',
+      );
       setResult(event.result);
     } else if (event.type === 'run.failed') {
       setStatusMessage('Research stream failed.');
@@ -131,6 +154,7 @@ export function useResearch() {
     setIsLoading(true);
     setError(undefined);
     setIsDraftReady(false);
+    setApprovalRequest(undefined);
     setResult({
       ticker,
       secDataMode,
@@ -153,7 +177,25 @@ export function useResearch() {
     }
   }
 
+  async function reviewResearch(decision: HumanReviewDecision) {
+    if (!approvalRequest) return;
+
+    setIsLoading(true);
+    setError(undefined);
+
+    try {
+      await resumeResearchStream(approvalRequest.runId, decision, handleEvent);
+    } catch (caughtError) {
+      setError(
+        caughtError instanceof Error ? caughtError.message : 'The research run could not resume.',
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   return {
+    approvalRequest,
     error,
     isDraftReady,
     isLoading,
@@ -161,5 +203,6 @@ export function useResearch() {
     stageStatuses,
     statusMessage,
     submitResearch,
+    reviewResearch,
   };
 }

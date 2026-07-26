@@ -1,4 +1,4 @@
-export type ResearchStatus = 'pending' | 'researching' | 'complete' | 'failed';
+export type ResearchStatus = 'pending' | 'researching' | 'complete' | 'failed' | 'rejected';
 export type SecDataMode = 'live' | 'fixture';
 
 export type Source = {
@@ -65,6 +65,20 @@ export type ChallengeReport = {
   sourceIdsUsed: string[];
 };
 
+export type HumanReviewDecision = {
+  decision: 'approve' | 'revise' | 'reject';
+  feedback?: string;
+};
+
+export type HumanReviewRequest = {
+  type: 'committee_sign_off';
+  ticker: string;
+  companyName?: string;
+  challengeReport: ChallengeReport;
+  warnings: string[];
+  allowedDecisions: HumanReviewDecision['decision'][];
+};
+
 export type ResearchResponse = {
   ticker: string;
   companyName?: string;
@@ -80,7 +94,9 @@ export type ResearchResponse = {
 };
 
 export type ResearchEvent =
-  | { type: 'run.started'; ticker: string; secDataMode: SecDataMode }
+  | { type: 'run.started'; runId: string; ticker: string; secDataMode: SecDataMode }
+  | { type: 'run.resumed'; runId: string; decision: HumanReviewDecision['decision'] }
+  | { type: 'run.interrupted'; runId: string; request: HumanReviewRequest }
   | { type: 'stage.started'; stage: string }
   | { type: 'stage.completed'; stage: string }
   | {

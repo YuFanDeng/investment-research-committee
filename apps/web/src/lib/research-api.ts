@@ -2,6 +2,8 @@ import type {
   AnalystReport,
   ChallengeReport,
   Fundamentals,
+  HumanReviewDecision,
+  HumanReviewRequest,
   MarketSnapshot,
   ResearchEvent,
   ResearchResponse,
@@ -37,7 +39,7 @@ export async function runResearchStream(
   ticker: string,
   secDataMode: SecDataMode,
   onEvent: (event: ResearchEvent) => void,
-): Promise<ResearchResponse> {
+): Promise<ResearchResponse | undefined> {
   const response = await fetch(`${API_URL}/research/stream`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
@@ -49,10 +51,37 @@ export async function runResearchStream(
     throw new Error(body?.message ?? 'Research stream could not be started.');
   }
 
-  const reader = response.body.getReader();
+  return consumeResearchStream(response, onEvent);
+}
+
+export async function resumeResearchStream(
+  runId: string,
+  decision: HumanReviewDecision,
+  onEvent: (event: ResearchEvent) => void,
+): Promise<ResearchResponse | undefined> {
+  const response = await fetch(`${API_URL}/research/${encodeURIComponent(runId)}/resume/stream`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
+    body: JSON.stringify(decision),
+  });
+
+  if (!response.ok || !response.body) {
+    const body = (await response.json().catch(() => null)) as { message?: string } | null;
+    throw new Error(body?.message ?? 'Research run could not be resumed.');
+  }
+
+  return consumeResearchStream(response, onEvent);
+}
+
+async function consumeResearchStream(
+  response: Response,
+  onEvent: (event: ResearchEvent) => void,
+): Promise<ResearchResponse | undefined> {
+  const reader = response.body!.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
   let completedResult: ResearchResponse | undefined;
+  let wasInterrupted = false;
 
   function consumeEvent(block: string) {
     const lines = block.split('\n');
@@ -81,8 +110,28 @@ export async function runResearchStream(
     if (eventName === 'run.started' && typeof payload.ticker === 'string') {
       onEvent({
         type: 'run.started',
+        runId: typeof payload.runId === 'string' ? payload.runId : '',
         ticker: payload.ticker,
         secDataMode: payload.secDataMode === 'fixture' ? 'fixture' : 'live',
+      });
+      return;
+    }
+    if (
+      eventName === 'run.resumed' &&
+      typeof payload.runId === 'string' &&
+      (payload.decision === 'approve' ||
+        payload.decision === 'revise' ||
+        payload.decision === 'reject')
+    ) {
+      onEvent({ type: 'run.resumed', runId: payload.runId, decision: payload.decision });
+      return;
+    }
+    if (eventName === 'run.interrupted' && typeof payload.runId === 'string' && payload.request) {
+      wasInterrupted = true;
+      onEvent({
+        type: 'run.interrupted',
+        runId: payload.runId,
+        request: payload.request as HumanReviewRequest,
       });
       return;
     }
@@ -145,6 +194,8 @@ export async function runResearchStream(
     if (done) break;
   }
 
-  if (!completedResult) throw new Error('Research stream ended before a result was received.');
+  if (!completedResult && !wasInterrupted) {
+    throw new Error('Research stream ended before a result was received.');
+  }
   return completedResult;
 }

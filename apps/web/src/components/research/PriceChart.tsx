@@ -47,27 +47,27 @@ export function PriceChart({ snapshot }: PriceChartProps) {
       <div className="chart-canvas">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 12, right: 10, bottom: 0, left: -22 }}>
-            <CartesianGrid stroke="#2a3a2d" strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid stroke="#e2e8f0" strokeDasharray="3 3" vertical={false} />
             <XAxis
               dataKey="label"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: '#91a196', fontSize: 10 }}
+              tick={{ fill: '#64748b', fontSize: 10 }}
               minTickGap={34}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fill: '#91a196', fontSize: 10 }}
+              tick={{ fill: '#64748b', fontSize: 10 }}
               domain={['auto', 'auto']}
               tickFormatter={(value: number) => `$${value}`}
             />
             <Tooltip
               contentStyle={{
-                background: '#19241c',
-                border: '1px solid #3c5541',
+                background: '#ffffff',
+                border: '1px solid #dce3ea',
                 borderRadius: '8px',
-                color: '#e9f1ea',
+                color: '#172033',
                 fontSize: '12px',
               }}
               formatter={(value) => [formatPrice(Number(value), snapshot.currency), 'Close']}
@@ -76,10 +76,10 @@ export function PriceChart({ snapshot }: PriceChartProps) {
             <Line
               type="monotone"
               dataKey="close"
-              stroke={isPositive ? '#b7f28b' : '#f18b78'}
+              stroke={isPositive ? '#16a36a' : '#dc5a65'}
               strokeWidth={2.5}
               dot={false}
-              activeDot={{ r: 4, fill: '#b7f28b', stroke: '#102014', strokeWidth: 2 }}
+              activeDot={{ r: 4, fill: '#16a36a', stroke: '#ffffff', strokeWidth: 2 }}
             />
           </LineChart>
         </ResponsiveContainer>

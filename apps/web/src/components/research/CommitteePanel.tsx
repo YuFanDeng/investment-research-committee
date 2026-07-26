@@ -72,24 +72,27 @@ export function CommitteePanel({ reports, isLoading, stageStatuses }: CommitteeP
                 <span>{formatConfidence(report.confidence)}</span>
               </div>
               <p>{report.thesis}</p>
-              <div className="analyst-columns">
-                <div>
-                  <span className="analyst-label">Evidence</span>
-                  <ul>
-                    {report.supportingEvidence.slice(0, 2).map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
+              <details className="analyst-details">
+                <summary>Review evidence and concerns</summary>
+                <div className="analyst-columns">
+                  <div>
+                    <span className="analyst-label">Evidence</span>
+                    <ul>
+                      {report.supportingEvidence.slice(0, 2).map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <span className="analyst-label analyst-label-risk">Concerns</span>
+                    <ul>
+                      {report.concerns.slice(0, 2).map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <div>
-                  <span className="analyst-label analyst-label-risk">Concerns</span>
-                  <ul>
-                    {report.concerns.slice(0, 2).map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+              </details>
             </article>
           );
         })}

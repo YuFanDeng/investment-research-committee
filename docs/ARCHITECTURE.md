@@ -24,7 +24,9 @@ flowchart TB
     Business --> Draft
     Valuation --> Draft
     Draft --> Skeptic[Skeptic challenge]
-    Skeptic --> Chair[Final chair synthesis]
+    Skeptic --> Approval{Human committee sign-off}
+    Approval -->|Approve or revise| Chair[Final chair synthesis]
+    Approval -->|Reject| Rejected[End without publishing]
     Chair --> Memo[Source-backed memo]
     Memo --> API
 
@@ -41,7 +43,10 @@ flowchart TB
 
 - The browser owns interaction and presentation; it does not orchestrate agents.
 - Hono keeps provider credentials server-side and exposes both synchronous and streaming APIs.
-- LangGraph owns shared state, ordering, parallel analyst work, and critique stages.
+- LangGraph owns shared state, ordering, parallel analyst work, critique, checkpointing, and
+  conditional routing after a human decision.
+- The streaming workflow pauses at a graph boundary. The browser resumes the same run by its
+  `thread_id`; it does not restart research or recreate graph state.
 - SEC EDGAR provides filing evidence and Massive provides normalized market context.
 - Ollama is replaceable because model invocation is isolated behind typed graph dependencies.
 - Deterministic fallbacks keep the demo inspectable when a local model or provider is unavailable.

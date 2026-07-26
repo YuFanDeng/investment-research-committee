@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { Check, Circle, LoaderCircle } from 'lucide-react';
 
 import { RESEARCH_STAGES, type ResearchStageStatus } from '../../hooks/use-research';
@@ -5,6 +6,8 @@ import { RESEARCH_STAGES, type ResearchStageStatus } from '../../hooks/use-resea
 type ResearchProgressProps = {
   isLoading: boolean;
   hasResult: boolean;
+  isAwaitingApproval: boolean;
+  isRejected: boolean;
   statusMessage: string;
   stageStatuses: Record<string, ResearchStageStatus>;
 };
@@ -12,6 +15,8 @@ type ResearchProgressProps = {
 export function ResearchProgress({
   isLoading,
   hasResult,
+  isAwaitingApproval,
+  isRejected,
   stageStatuses,
   statusMessage,
 }: ResearchProgressProps) {
@@ -21,11 +26,24 @@ export function ResearchProgress({
   const progressPercent = hasResult ? 100 : (completedStages / RESEARCH_STAGES.length) * 100;
 
   return (
-    <section className="progress-panel" aria-label="Research workflow progress">
-      <div className="section-kicker">
-        <span>Workflow activity</span>
+    <aside className="progress-panel" aria-label="Research workflow progress">
+      <div className="progress-heading">
+        <div>
+          <span className="section-kicker">Research run</span>
+          <strong>
+            {completedStages} of {RESEARCH_STAGES.length} stages
+          </strong>
+        </div>
         <span className={isLoading ? 'live-label' : 'muted-label'}>
-          {isLoading ? 'LIVE' : hasResult ? 'COMPLETE' : 'READY'}
+          {isLoading
+            ? 'Live'
+            : isAwaitingApproval
+              ? 'Approval'
+              : hasResult
+                ? 'Complete'
+                : isRejected
+                  ? 'Rejected'
+                  : 'Ready'}
         </span>
       </div>
       <p className="progress-status" role="status">
@@ -39,24 +57,26 @@ export function ResearchProgress({
           const status = hasResult ? 'complete' : (stageStatuses[stage.id] ?? 'waiting');
           const Icon = status === 'complete' ? Check : status === 'active' ? LoaderCircle : Circle;
           return (
-            <div className={`stage-item is-${status}`} key={stage.id}>
+            <Fragment key={stage.id}>
               {index === 0 || RESEARCH_STAGES[index - 1].phase !== stage.phase ? (
                 <span className="stage-phase-label">{stage.phase}</span>
               ) : null}
-              <div className="stage-connector" aria-hidden="true">
-                {index < RESEARCH_STAGES.length - 1 ? <span /> : null}
+              <div className={`stage-item is-${status}`}>
+                {index < RESEARCH_STAGES.length - 1 ? (
+                  <span className="stage-connector" aria-hidden="true" />
+                ) : null}
+                <span className="stage-icon" aria-hidden="true">
+                  <Icon className={status === 'active' ? 'spin' : undefined} size={15} />
+                </span>
+                <span className="stage-copy">
+                  <strong>{stage.label}</strong>
+                  <small>{status === 'active' ? 'Working now' : status}</small>
+                </span>
               </div>
-              <span className="stage-icon" aria-hidden="true">
-                <Icon className={status === 'active' ? 'spin' : undefined} size={15} />
-              </span>
-              <span className="stage-copy">
-                <strong>{stage.label}</strong>
-                <small>{status === 'active' ? 'Working now' : status}</small>
-              </span>
-            </div>
+            </Fragment>
           );
         })}
       </div>
-    </section>
+    </aside>
   );
 }

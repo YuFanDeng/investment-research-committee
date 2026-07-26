@@ -68,6 +68,23 @@ function MemoSection({
 export function ResearchMemo({ result, isDraftReady, isLoading }: ResearchMemoProps) {
   const memo: ResearchMemoData | undefined = result.memo;
   if (!memo) {
+    if (result.status === 'rejected') {
+      return (
+        <article className="memo-card research-memo-card rejected-memo-card">
+          <div className="memo-card-header">
+            <div>
+              <span className="section-kicker">Research memo</span>
+              <h2 id="memo-heading">Not published</h2>
+            </div>
+            <span className="artifact-status is-rejected">Rejected</span>
+          </div>
+          <p className="memo-snapshot">
+            Human review ended this run after the skeptic challenge. No final committee memo was
+            published.
+          </p>
+        </article>
+      );
+    }
     if (!isLoading) return null;
 
     return (
@@ -75,7 +92,7 @@ export function ResearchMemo({ result, isDraftReady, isLoading }: ResearchMemoPr
         <div className="memo-card-header">
           <div>
             <span className="section-kicker">Research memo</span>
-            <h2>{result.companyName ?? result.ticker}</h2>
+            <h2 id="memo-heading">{result.companyName ?? result.ticker}</h2>
           </div>
           <span className="artifact-status is-active">
             {isDraftReady ? 'Under review' : 'Preparing'}
@@ -87,7 +104,7 @@ export function ResearchMemo({ result, isDraftReady, isLoading }: ResearchMemoPr
           <span className="skeleton-line skeleton-line-short" />
           <p>
             {isDraftReady
-              ? 'The chair draft is complete and remains hidden while the skeptic reviews it.'
+              ? 'The chair draft is complete and remains hidden until review is resolved.'
               : 'The final memo will appear after the analysts, chair, and skeptic finish.'}
           </p>
         </div>
@@ -100,7 +117,7 @@ export function ResearchMemo({ result, isDraftReady, isLoading }: ResearchMemoPr
       <div className="memo-card-header">
         <div>
           <span className="section-kicker">Research memo</span>
-          <h2>{result.companyName ?? result.ticker}</h2>
+          <h2 id="memo-heading">{result.companyName ?? result.ticker}</h2>
           <p className="ticker-subtitle">${result.ticker} · fundamentals snapshot</p>
         </div>
         <span className="complete-badge">
