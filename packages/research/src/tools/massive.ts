@@ -34,6 +34,13 @@ export type MarketDataResult = {
   source: Source;
 };
 
+export type PriceHistoryResult = {
+  ticker: string;
+  days: 30 | 90 | 365;
+  historicalCloses: MarketSnapshot['historicalCloses'];
+  source: Source;
+};
+
 export class MassiveError extends Error {}
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -108,24 +115,52 @@ export class MassiveClient {
     return details;
   }
 
-  async getMarketSnapshot(ticker: string): Promise<MarketDataResult> {
-    const encodedTicker = encodeURIComponent(ticker.toUpperCase());
-    const [previous, aggregates, tickerDetails, peers] = await Promise.all([
-      this.requestJson<MassivePreviousResponse>(`/v2/aggs/ticker/${encodedTicker}/prev`),
-      this.requestJson<MassiveAggregatesResponse>(
-        `/v2/aggs/ticker/${encodedTicker}/range/1/day/${dateDaysAgo(365)}/${isoDate(new Date())}`,
-      ),
-      this.requestJson<MassiveTickerResponse>(`/v3/reference/tickers/${encodedTicker}`),
-      this.getPeerComparisons(ticker),
-    ]);
+  private async getHistoricalCloses(ticker: string, days: number) {
+    const response = await this.requestJson<MassiveAggregatesResponse>(
+      `/v2/aggs/ticker/${encodeURIComponent(ticker.toUpperCase())}/range/1/day/${dateDaysAgo(days)}/${isoDate(new Date())}`,
+    );
 
-    const previousClose = previous.results?.[0]?.c;
-    const historicalCloses = (aggregates.results ?? [])
+    return (response.results ?? [])
       .filter(
         (bar): bar is { c: number; t: number } =>
           typeof bar.c === 'number' && typeof bar.t === 'number',
       )
       .map((bar) => ({ date: new Date(bar.t).toISOString().slice(0, 10), close: bar.c }));
+  }
+
+  async getPriceHistory(ticker: string, days: 30 | 90 | 365): Promise<PriceHistoryResult> {
+    const historicalCloses = await this.getHistoricalCloses(ticker, days);
+    if (!historicalCloses.length) {
+      throw new MassiveError(
+        `Massive returned no usable price history for ${ticker.toUpperCase()}.`,
+      );
+    }
+
+    return {
+      ticker: ticker.toUpperCase(),
+      days,
+      historicalCloses,
+      source: {
+        id: `massive-price-history-${ticker.toUpperCase()}-${days}d`,
+        title: `${ticker.toUpperCase()} — Massive ${days}-day price history`,
+        url: `https://massive.com/stocks/${ticker.toUpperCase()}`,
+        sourceType: 'market_data',
+        retrievedAt: new Date().toISOString(),
+      },
+    };
+  }
+
+  async getMarketSnapshot(ticker: string): Promise<MarketDataResult> {
+    const encodedTicker = encodeURIComponent(ticker.toUpperCase());
+    const [previous, aggregates, tickerDetails, peers] = await Promise.all([
+      this.requestJson<MassivePreviousResponse>(`/v2/aggs/ticker/${encodedTicker}/prev`),
+      this.getHistoricalCloses(ticker, 365),
+      this.requestJson<MassiveTickerResponse>(`/v3/reference/tickers/${encodedTicker}`),
+      this.getPeerComparisons(ticker),
+    ]);
+
+    const previousClose = previous.results?.[0]?.c;
+    const historicalCloses = aggregates;
 
     if (typeof previousClose !== 'number' || historicalCloses.length === 0) {
       throw new MassiveError(

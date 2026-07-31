@@ -15,12 +15,14 @@ This document records the design decisions for the research workspace redesign.
 | Area                   | Decision                                                                    | Rationale                                                                                                                                |
 | ---------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Visual direction       | Light modern research workspace with elevated white cards                   | Keeps dense financial information approachable while preserving a polished interview-demo surface.                                       |
-| Workflow visualization | Sticky vertical node timeline grouped into four named phases                | Nine stages remain readable without competing for horizontal space, and the active stage stays visible while results stream in.          |
+| Workflow visualization | Sticky vertical node timeline grouped into four named phases                | Ten stages remain readable without competing for horizontal space, and the active stage stays visible while results stream in.           |
 | Price visualization    | Recharts line chart using the historical closes already returned by Massive | Shows real market context without inventing data or adding a second market-data request.                                                 |
 | Icons                  | `lucide-react`                                                              | Consistent, accessible SVG icons for status, evidence, market, and analyst cards.                                                        |
 | Styling                | Existing CSS variables and component classes                                | Keeps visual decisions explicit and avoids a migration to a utility framework for this milestone.                                        |
 | Component library      | No full UI kit yet                                                          | The project benefits more from domain-specific components than generic prebuilt cards and layouts.                                       |
 | Graph library          | No React Flow-style graph yet                                               | The workflow is best understood as a timeline in the primary user experience; the architecture diagram remains a documentation artifact. |
+| Assistant placement    | Full-width card on both landing and completed-research views                | Lets users ask immediately or follow up without mixing its tool loop into the committee timeline.                                        |
+| Landing empty state    | Replaced by the functional assistant card                                   | Gives first-time users an immediate alternative to running the full committee instead of a decorative placeholder.                       |
 
 ## Component model
 
@@ -32,6 +34,10 @@ ResearchWorkspace
 │   └── MarketCapMetric
 ├── ResearchToolbar
 ├── SectionNavigation
+├── ResearchAssistantPanel
+│   ├── Conversation
+│   ├── ToolActivityTrace
+│   └── SourceLinks
 └── WorkspaceGrid
     ├── VerticalResearchTimeline
     └── ProgressiveResults
@@ -57,6 +63,8 @@ ResearchWorkspace
 - Chart tooltips expose the date and price for each historical point.
 - Motion is limited to small status transitions and respects `prefers-reduced-motion`.
 - Fixture/live SEC mode remains available only in development and is visually secondary to the research action.
+- Conversational tool calls show readable names, validated arguments, and completion state without
+  exposing raw tool payloads.
 
 ## Scope boundary
 

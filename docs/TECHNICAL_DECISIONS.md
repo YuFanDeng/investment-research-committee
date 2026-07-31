@@ -22,6 +22,9 @@ This document records the initial implementation choices for the Investment Rese
 | Ollama context window   | Configurable via `OLLAMA_NUM_CTX`, default `4096` | Keeps local development compatible with the current model while allowing larger-context models later.                |
 | Human review            | LangGraph interrupt after skeptic challenge       | Demonstrates checkpointed pause/resume, explicit user control, and conditional graph routing before publication.     |
 | Demo checkpointing      | LangGraph `MemorySaver`                           | Preserves paused runs by `thread_id` without adding a database; durable persistence remains a later production step. |
+| Conversational agent    | Bounded LangGraph `ToolNode` loop                 | Lets the model select read-only research functions while preserving explicit limits and visible execution.           |
+| Tool result strategy    | Compact structured JSON with source IDs           | Keeps tool evidence auditable and protects the local model's 4,096-token context window.                             |
+| Tool organization       | Domain category modules plus a shared catalog     | Keeps SEC, market, valuation, and future tool families independently readable and testable.                          |
 
 ## Architecture
 
@@ -53,6 +56,13 @@ checkpointed run; reject routes directly to the end without publishing a final m
 The synchronous `/research` endpoint auto-approves for backward compatibility. Human approval is a
 feature of the interactive SSE workflow, where a stable run ID is available for resumption. See
 [Human approval interrupts](HUMAN_APPROVAL.md) for the detailed contract.
+
+## Conversational tool selection
+
+Focused questions use a separate tool-calling graph instead of changing the committee into an
+open-ended loop. The model may choose SEC fundamentals, filing metadata, market snapshot, bounded
+price history, or deterministic valuation tools. Runs are capped at four tool calls and stream tool
+activity to the browser. See [Conversational tool-calling agent](TOOL_CALLING_AGENT.md).
 
 ## Ticker validation and SEC fundamentals
 

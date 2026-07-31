@@ -5,11 +5,11 @@ import { AppShell } from './components/layout/AppShell';
 import { CommitteePanel } from './components/research/CommitteePanel';
 import { ApprovalPanel } from './components/research/ApprovalPanel';
 import { CompanyHeader } from './components/research/CompanyHeader';
-import { EmptyResearchState } from './components/research/EmptyResearchState';
 import { EvidencePanel } from './components/research/EvidencePanel';
 import { FundamentalsSnapshotPanel } from './components/research/FundamentalsSnapshotPanel';
 import { ResearchMemo } from './components/research/ResearchMemo';
 import { ResearchProgress } from './components/research/ResearchProgress';
+import { ResearchAssistantPanel } from './components/research/ResearchAssistantPanel';
 import { TickerSearch } from './components/research/TickerSearch';
 import { MarketSnapshotPanel } from './components/research/MarketSnapshotPanel';
 import { SkepticPanel } from './components/research/SkepticPanel';
@@ -46,6 +46,7 @@ export default function App() {
             <a href="#market-snapshot-heading">Market</a>
             <a href="#fundamentals-heading">Fundamentals</a>
             <a href="#committee-heading">Committee</a>
+            <a href="#ask-research">Ask AI</a>
             <a href="#memo-heading">Memo</a>
             <a href="#sources-heading">Sources</a>
           </nav>
@@ -67,6 +68,11 @@ export default function App() {
               {error}
             </div>
           ) : null}
+          <ResearchAssistantPanel
+            key={`${result.ticker}-${result.secDataMode}`}
+            ticker={result.ticker}
+            secDataMode={result.secDataMode}
+          />
           <div className="research-workspace">
             <ResearchProgress
               isLoading={isLoading}
@@ -137,7 +143,12 @@ export default function App() {
               {error}
             </div>
           ) : null}
-          <EmptyResearchState />
+          <ResearchAssistantPanel
+            key={`home-${ticker}-${secDataMode}`}
+            ticker={ticker.trim().toUpperCase()}
+            secDataMode={secDataMode}
+            landing
+          />
         </>
       )}
     </AppShell>

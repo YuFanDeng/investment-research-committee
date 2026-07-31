@@ -1,0 +1,89 @@
+# Conversational Tool-Calling Agent
+
+## Decision
+
+Add a conversational research agent alongside the existing investment committee graph. The agent
+answers focused ticker questions by choosing from a small set of read-only tools. It does not
+replace the deterministic committee workflow.
+
+This gives the product two complementary modes:
+
+- **Committee research** runs a known sequence of specialist agents, critique, and human approval.
+- **Ask research** lets the model decide which evidence is necessary for a focused question.
+
+The same assistant is available on the landing page and after a committee run. On the landing page
+it uses the ticker and SEC mode in the main research controls, so a user does not need to run the
+full committee before asking a focused question.
+
+## Initial tool catalog
+
+| Tool                          | Responsibility                                                               |
+| ----------------------------- | ---------------------------------------------------------------------------- |
+| `get_sec_fundamentals`        | Retrieve normalized annual SEC revenue, net income, and operating cash flow. |
+| `get_recent_filings`          | Find recent 10-K, 10-Q, or 8-K filing metadata and source links.             |
+| `get_market_snapshot`         | Retrieve the latest end-of-day price, market cap, and related companies.     |
+| `get_price_history`           | Summarize a bounded 30, 90, or 365-day price range.                          |
+| `calculate_valuation_metrics` | Calculate earnings and cash-flow multiples deterministically.                |
+
+Tools return compact JSON with source IDs. The model chooses tools and explains results, while
+TypeScript performs data retrieval and calculations.
+
+## Tool organization
+
+Tool implementations are grouped by research domain so the catalog can grow without becoming a
+single large module:
+
+```text
+assistant/tools/
+├── catalog.ts    # Combines the category tool lists
+├── context.ts    # Per-run clients, request cache, and source collection
+├── sec.ts        # SEC fundamentals and filing tools
+├── market.ts     # Market snapshot and price-history tools
+└── valuation.ts  # Deterministic valuation tools
+```
+
+A future category, such as news or insider activity, should add its own module and register its tool
+list in `catalog.ts`. Cross-category request caching and source tracking stay in `context.ts`.
+
+## Graph shape
+
+```text
+User conversation
+       ↓
+Tool-selection model
+       ↓
+Did the model request tools?
+  ├── yes → execute tools → model
+  ├── over limit → answer from collected evidence
+  └── no → final answer
+```
+
+LangGraph's `ToolNode` executes requested tools. The API translates graph updates into SSE events so
+the UI can show which tool was requested and when it completed.
+
+## Guardrails
+
+- Tools are read-only and have Zod-validated inputs.
+- Tickers are normalized before entering the graph.
+- Conversation history is limited to six messages.
+- Questions are limited to 1,000 characters.
+- One run can execute at most four tool calls.
+- Price ranges are restricted to 30, 90, or 365 days.
+- Price history is summarized before reaching the model to protect the 4,096-token context window.
+- Financial ratios are calculated from retrieved values, never by model arithmetic.
+- Every external result retains source IDs, URLs, and retrieval timestamps.
+- The answer must distinguish reported facts from inference and must not give personalized advice.
+
+## Failure behavior
+
+A provider or tool error becomes a tool result that the model can acknowledge. If Ollama itself is
+unavailable or the selected model cannot call tools, the request fails visibly rather than silently
+pretending that an autonomous tool decision occurred.
+
+## Known limitations
+
+- Tool selection quality depends on the installed Ollama model's native tool-calling ability.
+- The agent has short-term request history only; conversations are not persisted.
+- The in-memory execution is suitable for a local interview demo, not a multi-instance deployment.
+- Valuation metrics use annual SEC facts and end-of-day market capitalization; they are educational
+  screening ratios, not a full valuation model.

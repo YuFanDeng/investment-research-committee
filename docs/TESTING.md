@@ -9,6 +9,10 @@ Massive market data remains live in both modes. This lets us iterate quickly on 
 workflow changes while preserving real prices, history, and peer comparisons for the valuation
 analyst.
 
+The conversational agent reuses the same per-request SEC mode. Tool tests use injected clients and
+assert deterministic calculations, compact price-history output, source collection, and filing
+metadata without calling external services or Ollama.
+
 ## Fixture
 
 The fixture is the raw SEC Company Facts response captured for Apple:

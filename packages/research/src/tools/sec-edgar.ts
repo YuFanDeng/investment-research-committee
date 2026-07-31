@@ -1,7 +1,9 @@
 import { type Fundamentals, type Source } from '../schemas.js';
+import { z } from 'zod';
 
 const SEC_TICKERS_URL = 'https://www.sec.gov/files/company_tickers.json';
 const SEC_COMPANY_FACTS_URL = 'https://data.sec.gov/api/xbrl/companyfacts';
+const SEC_SUBMISSIONS_URL = 'https://data.sec.gov/submissions';
 const MIN_REQUEST_INTERVAL_MS = 150;
 
 type TickerRecord = {
@@ -16,6 +18,7 @@ export type CompanyFactsResponse = {
 };
 
 type SecFact = {
+  accn?: string;
   end?: string;
   filed?: string;
   form?: string;
@@ -25,12 +28,39 @@ type SecFact = {
   val?: number;
 };
 
+const SubmissionsResponseSchema = z.object({
+  name: z.string().optional(),
+  filings: z.object({
+    recent: z.object({
+      accessionNumber: z.array(z.string()),
+      filingDate: z.array(z.string()),
+      reportDate: z.array(z.string()),
+      form: z.array(z.string()),
+      primaryDocument: z.array(z.string()),
+    }),
+  }),
+});
+
 type AnnualFact = Required<Pick<SecFact, 'end' | 'filed' | 'start' | 'val'>>;
 
 export type SecFundamentals = {
   companyName: string;
   fundamentals: Fundamentals;
   source: Source;
+};
+
+export type SecFiling = {
+  accessionNumber: string;
+  filingDate: string;
+  reportDate?: string;
+  form: string;
+  primaryDocument?: string;
+  source: Source;
+};
+
+export type RecentSecFilings = {
+  companyName: string;
+  filings: SecFiling[];
 };
 
 export class SecEdgarError extends Error {}
@@ -167,13 +197,17 @@ export class SecEdgarClient {
     return tickerRecordsPromise;
   }
 
-  async getFundamentals(ticker: string): Promise<SecFundamentals> {
+  private async resolveCompany(ticker: string) {
     const records = await this.tickerRecords();
     const company = records.find((record) => record.ticker.toUpperCase() === ticker.toUpperCase());
 
     if (!company) throw new SecEdgarError(`SEC EDGAR does not recognize the ticker ${ticker}.`);
+    return { ...company, cik: String(company.cik_str).padStart(10, '0') };
+  }
 
-    const cik = String(company.cik_str).padStart(10, '0');
+  async getFundamentals(ticker: string): Promise<SecFundamentals> {
+    const company = await this.resolveCompany(ticker);
+    const cik = company.cik;
     const sourceUrl = `${SEC_COMPANY_FACTS_URL}/CIK${cik}.json`;
     const response = await this.requestJson(sourceUrl);
 
@@ -191,5 +225,52 @@ export class SecEdgarClient {
         retrievedAt: new Date().toISOString(),
       },
     };
+  }
+
+  async getRecentFilings(
+    ticker: string,
+    formTypes: string[] = ['10-K', '10-Q', '8-K'],
+    limit = 5,
+  ): Promise<RecentSecFilings> {
+    const company = await this.resolveCompany(ticker);
+    const response = SubmissionsResponseSchema.parse(
+      await this.requestJson(`${SEC_SUBMISSIONS_URL}/CIK${company.cik}.json`),
+    );
+    const recent = response.filings.recent;
+    const filings: SecFiling[] = [];
+
+    for (let index = 0; index < recent.accessionNumber.length; index += 1) {
+      const form = recent.form[index];
+      if (!form || !formTypes.includes(form)) continue;
+
+      const accessionNumber = recent.accessionNumber[index];
+      const filingDate = recent.filingDate[index];
+      if (!accessionNumber || !filingDate) continue;
+
+      const primaryDocument = recent.primaryDocument[index];
+      const archivePath = `${company.cik_str}/${accessionNumber.replaceAll('-', '')}`;
+      const url = primaryDocument
+        ? `https://www.sec.gov/Archives/edgar/data/${archivePath}/${primaryDocument}`
+        : `https://www.sec.gov/Archives/edgar/data/${archivePath}/`;
+
+      filings.push({
+        accessionNumber,
+        filingDate,
+        reportDate: recent.reportDate[index] || undefined,
+        form,
+        primaryDocument: primaryDocument || undefined,
+        source: {
+          id: `sec-filing-${accessionNumber}`,
+          title: `${response.name ?? company.title} — ${form} filed ${filingDate}`,
+          url,
+          sourceType: 'sec_filing',
+          retrievedAt: new Date().toISOString(),
+        },
+      });
+
+      if (filings.length >= limit) break;
+    }
+
+    return { companyName: response.name ?? company.title, filings };
   }
 }

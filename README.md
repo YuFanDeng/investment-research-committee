@@ -12,6 +12,7 @@ The project provides a complete multi-agent research demo:
 4. Run fundamentals, business quality, and valuation analysts with a chair draft and skeptic challenge.
 5. Pause after the skeptic challenge for a human approve, revise, or reject decision.
 6. Display a historical price chart, analyst reports, source trail, and approved final memo.
+7. Ask focused follow-up questions while a bounded agent selects SEC, market, or valuation tools.
 
 Local Ollama generation is optional; deterministic fallbacks keep the workflow usable when the model is unavailable.
 
@@ -20,38 +21,56 @@ Local Ollama generation is optional; deterministic fallbacks keep the workflow u
 ```mermaid
 flowchart TB
     User[Investor / interviewer] --> Web[React + Vite dashboard]
-    Web -->|POST /research/stream| API[Hono API]
-    API --> Graph[LangGraph.js research graph]
+    Web -->|SSE request| API[Hono API]
 
-    Graph --> Validate[Validate ticker]
-    Validate --> SEC[SEC EDGAR adapter]
-    Validate --> Massive[Massive market adapter]
+    subgraph Committee[Deterministic committee workflow]
+        direction TB
+        ResearchGraph[LangGraph research graph] --> Validate[Validate ticker]
+        Validate --> Evidence[Retrieve and normalize evidence]
+        Evidence --> Analysts[Parallel specialist analysts]
+        Analysts --> Fundamentals[Fundamentals]
+        Analysts --> Business[Business quality]
+        Analysts --> Valuation[Valuation]
+        Fundamentals --> Draft[Committee chair draft]
+        Business --> Draft
+        Valuation --> Draft
+        Draft --> Skeptic[Skeptic challenge]
+        Skeptic --> Approval{Human approval interrupt}
+        Approval -->|Approve or revise| Final[Final chair synthesis]
+        Approval -->|Reject| Rejected[End without publishing]
+    end
 
-    SEC --> Evidence[Shared evidence state]
-    Massive --> Evidence
-    Evidence --> Analysts[Parallel analyst nodes]
+    subgraph Assistant[Conversational tool-calling workflow]
+        direction TB
+        AgentGraph[LangGraph assistant graph] --> Model[Ollama chooses a tool or answers]
+        Model -->|Validated tool call| ToolNode[Bounded ToolNode loop]
+        ToolNode --> Catalog[Categorized tool catalog]
+        Catalog --> SecTools[SEC fundamentals and filings]
+        Catalog --> MarketTools[Snapshot and price history]
+        Catalog --> ValuationTools[Deterministic valuation metrics]
+        SecTools --> ToolResult[Compact sourced tool result]
+        MarketTools --> ToolResult
+        ValuationTools --> ToolResult
+        ToolResult -->|ToolMessage| Model
+        Model -->|No tool call| Answer[Source-backed answer]
+    end
 
-    Analysts --> Fundamentals[Fundamentals analyst]
-    Analysts --> Business[Business quality analyst]
-    Analysts --> Valuation[Valuation analyst]
+    API -->|POST /research/stream| ResearchGraph
+    API -->|POST /assistant/stream| AgentGraph
 
-    Fundamentals --> Draft[Committee chair draft]
-    Business --> Draft
-    Valuation --> Draft
-    Draft --> Skeptic[Skeptic challenge]
-    Skeptic --> Approval{Human committee sign-off}
-    Approval -->|Approve or revise| Chair[Final chair synthesis]
-    Approval -->|Reject| Rejected[End without publishing]
-    Chair --> Memo[Source-backed memo]
-    Memo --> API
+    SEC[(SEC EDGAR)] --> Evidence
+    Massive[(Massive market data)] --> Evidence
+    SEC --> SecTools
+    Massive --> MarketTools
+    SEC --> ValuationTools
+    Massive --> ValuationTools
+    Ollama[(Local Ollama model)] -. structured generation .-> Analysts
+    Ollama -. tool selection and response .-> Model
 
-    Graph -. lifecycle and artifact events .-> API
-    API -. Server-Sent Events .-> Web
-    Web --> Render[Timeline, chart, analyst cards, memo]
-
-    Ollama[(Local Ollama model)] -. structured output .-> Analysts
-    Ollama -. chair and skeptic output .-> Draft
-    Ollama -. chair and skeptic output .-> Chair
+    Final --> ResearchEvents[Research lifecycle and artifact events]
+    ResearchEvents -. SSE .-> API
+    Answer -. SSE tool activity and answer .-> API
+    API -. incremental UI updates .-> Web
 ```
 
 See [Interview Demo Architecture](docs/ARCHITECTURE.md) for the accompanying design notes and interview talking points.
@@ -96,6 +115,7 @@ pnpm format:check  # Verify formatting without changing files
 - [UI decisions](docs/UI_DECISIONS.md)
 - [Streaming design](docs/STREAMING.md)
 - [Human approval interrupts](docs/HUMAN_APPROVAL.md)
+- [Conversational tool-calling agent](docs/TOOL_CALLING_AGENT.md)
 - [Market-data provider](docs/MARKET_DATA_PROVIDER.md)
 - [Testing strategy](docs/TESTING.md)
 - [Interview architecture](docs/ARCHITECTURE.md)

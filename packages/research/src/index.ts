@@ -6,6 +6,14 @@ export type {
   ResearchGraphResult,
 } from './graph.js';
 export { createResearchModel, getModelSettings } from './model.js';
+export { createResearchAssistantRun, messageContentAsText } from './assistant/agent.js';
+export type { ResearchAssistantRun } from './assistant/agent.js';
+export { ResearchAssistantRequestSchema } from './assistant/schemas.js';
+export type {
+  AssistantConversationMessage,
+  ResearchAssistantRequest,
+  ResearchToolCall,
+} from './assistant/schemas.js';
 export { buildMemoWriterMessages, MEMO_WRITER_SYSTEM_PROMPT } from './prompts/memo-writer.js';
 export {
   ANALYST_SYSTEM_PROMPTS,
@@ -13,6 +21,7 @@ export {
   buildChairMessages,
 } from './prompts/committee.js';
 export { SecEdgarClient, SecEdgarError } from './tools/sec-edgar.js';
+export type { RecentSecFilings, SecFiling } from './tools/sec-edgar.js';
 export { MassiveClient, MassiveError } from './tools/massive.js';
 export { FixtureSecEdgarClient } from './tools/mock-data.js';
 export {

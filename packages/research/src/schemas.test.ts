@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { ResearchMemoSchema, ResearchRequestSchema } from './schemas.js';
+import { ResearchAssistantRequestSchema } from './assistant/schemas.js';
 
 describe('research schemas', () => {
   it('normalizes valid ticker input', () => {
@@ -25,5 +26,16 @@ describe('research schemas', () => {
         disclaimer: 'For educational research only.',
       }),
     ).toHaveProperty('sourceIdsUsed');
+  });
+
+  it('bounds conversational assistant input', () => {
+    const result = ResearchAssistantRequestSchema.parse({
+      ticker: ' aapl ',
+      question: 'How has the stock performed?',
+      history: [{ role: 'user', content: 'Start with the last year.' }],
+    });
+
+    expect(result.ticker).toBe('AAPL');
+    expect(result.history).toHaveLength(1);
   });
 });

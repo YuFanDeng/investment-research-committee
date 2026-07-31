@@ -4,6 +4,8 @@ import { cors } from 'hono/cors';
 import { createResearchGraphCatalog } from './research/graphs.js';
 import { createResearchRoutes } from './research/routes.js';
 import { PausedResearchRunStore } from './research/run-store.js';
+import { createAssistantFactory } from './assistant/factory.js';
+import { createAssistantRoutes } from './assistant/routes.js';
 
 type CreateAppOptions = {
   secContactEmail: string;
@@ -15,6 +17,7 @@ export function createApp(options: CreateAppOptions) {
   const app = new Hono();
   const graphs = createResearchGraphCatalog(options);
   const runStore = new PausedResearchRunStore();
+  const assistantFactory = createAssistantFactory(options);
 
   app.use(
     '/*',
@@ -26,6 +29,10 @@ export function createApp(options: CreateAppOptions) {
 
   app.get('/health', (context) => context.json({ status: 'ok' }));
   app.route('/', createResearchRoutes({ graphs, runStore, isProduction: options.isProduction }));
+  app.route(
+    '/',
+    createAssistantRoutes({ factory: assistantFactory, isProduction: options.isProduction }),
+  );
 
   return app;
 }

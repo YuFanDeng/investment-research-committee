@@ -1,50 +1,71 @@
 # Interview Demo Architecture
 
-This diagram shows the path from a ticker search to a source-backed committee memo.
+This diagram shows the two complementary LangGraph workflows behind the dashboard: a predictable
+investment committee and a conversational agent that selects read-only research tools.
 
 ```mermaid
 flowchart TB
     User[Investor / interviewer] --> Web[React + Vite dashboard]
-    Web -->|POST /research/stream| API[Hono API]
-    API --> Graph[LangGraph.js research graph]
+    Web -->|SSE request| API[Hono API]
 
-    Graph --> Validate[Validate ticker]
-    Validate --> SEC[SEC EDGAR adapter]
-    Validate --> Massive[Massive market adapter]
+    subgraph Committee[Deterministic committee workflow]
+        direction TB
+        ResearchGraph[LangGraph research graph] --> Validate[Validate ticker]
+        Validate --> Evidence[Retrieve and normalize evidence]
+        Evidence --> Analysts[Parallel specialist analysts]
+        Analysts --> Fundamentals[Fundamentals]
+        Analysts --> Business[Business quality]
+        Analysts --> Valuation[Valuation]
+        Fundamentals --> Draft[Committee chair draft]
+        Business --> Draft
+        Valuation --> Draft
+        Draft --> Skeptic[Skeptic challenge]
+        Skeptic --> Approval{Human approval interrupt}
+        Approval -->|Approve or revise| Final[Final chair synthesis]
+        Approval -->|Reject| Rejected[End without publishing]
+    end
 
-    SEC --> Evidence[Shared evidence state]
-    Massive --> Evidence
-    Evidence --> Analysts[Parallel analyst nodes]
+    subgraph Assistant[Conversational tool-calling workflow]
+        direction TB
+        AgentGraph[LangGraph assistant graph] --> Model[Ollama chooses a tool or answers]
+        Model -->|Validated tool call| ToolNode[Bounded ToolNode loop]
+        ToolNode --> Catalog[Categorized tool catalog]
+        Catalog --> SecTools[SEC fundamentals and filings]
+        Catalog --> MarketTools[Snapshot and price history]
+        Catalog --> ValuationTools[Deterministic valuation metrics]
+        SecTools --> ToolResult[Compact sourced tool result]
+        MarketTools --> ToolResult
+        ValuationTools --> ToolResult
+        ToolResult -->|ToolMessage| Model
+        Model -->|No tool call| Answer[Source-backed answer]
+    end
 
-    Analysts --> Fundamentals[Fundamentals analyst]
-    Analysts --> Business[Business quality analyst]
-    Analysts --> Valuation[Valuation analyst]
+    API -->|POST /research/stream| ResearchGraph
+    API -->|POST /assistant/stream| AgentGraph
 
-    Fundamentals --> Draft[Committee chair draft]
-    Business --> Draft
-    Valuation --> Draft
-    Draft --> Skeptic[Skeptic challenge]
-    Skeptic --> Approval{Human committee sign-off}
-    Approval -->|Approve or revise| Chair[Final chair synthesis]
-    Approval -->|Reject| Rejected[End without publishing]
-    Chair --> Memo[Source-backed memo]
-    Memo --> API
+    SEC[(SEC EDGAR)] --> Evidence
+    Massive[(Massive market data)] --> Evidence
+    SEC --> SecTools
+    Massive --> MarketTools
+    SEC --> ValuationTools
+    Massive --> ValuationTools
+    Ollama[(Local Ollama model)] -. structured generation .-> Analysts
+    Ollama -. tool selection and response .-> Model
 
-    Graph -. lifecycle and artifact events .-> API
-    API -. Server-Sent Events .-> Web
-    Web --> Render[Timeline, chart, analyst cards, memo]
-
-    Ollama[(Local Ollama model)] -. structured output .-> Analysts
-    Ollama -. chair and skeptic output .-> Draft
-    Ollama -. chair and skeptic output .-> Chair
+    Final --> ResearchEvents[Research lifecycle and artifact events]
+    ResearchEvents -. SSE .-> API
+    Answer -. SSE tool activity and answer .-> API
+    API -. incremental UI updates .-> Web
 ```
 
 ## Demo talking points
 
 - The browser owns interaction and presentation; it does not orchestrate agents.
-- Hono keeps provider credentials server-side and exposes both synchronous and streaming APIs.
+- Hono keeps provider credentials server-side and exposes streaming endpoints for both workflows.
 - LangGraph owns shared state, ordering, parallel analyst work, critique, checkpointing, and
   conditional routing after a human decision.
+- A separate bounded agent loop chooses read-only tools for focused user questions while the
+  committee graph remains deterministic.
 - The streaming workflow pauses at a graph boundary. The browser resumes the same run by its
   `thread_id`; it does not restart research or recreate graph state.
 - SEC EDGAR provides filing evidence and Massive provides normalized market context.

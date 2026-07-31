@@ -20,6 +20,7 @@ React dashboard.
 - [x] Redesign the dashboard as a light workspace with a vertical workflow rail.
 - [x] Add technical decision, testing, streaming, market-data, UI, and architecture documentation.
 - [x] Add a checkpointed human approval interrupt before final chair synthesis.
+- [x] Add a bounded conversational agent with visible read-only tool calls.
 - [x] Add formatting, type checking, tests, and production build checks.
 
 ## Next milestones

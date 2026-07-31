@@ -72,3 +72,20 @@ analyst nodes.
 The UI presents one detailed timeline grouped into Validate, Evidence, Committee, and Review.
 The earlier four-step summary was removed because it duplicated the node-level timeline without
 adding new information.
+
+## Conversational agent events
+
+Focused follow-up questions use a separate `POST /assistant/stream` response with a smaller event
+contract:
+
+```text
+assistant.started
+  ↓
+tool.requested / tool.completed (zero to four times)
+  ↓
+answer.completed
+```
+
+The API derives these events from LangGraph agent and `ToolNode` updates. Raw model messages and
+full tool payloads remain server-side; the browser receives tool names, validated arguments, the
+final answer, and the collected source records.
