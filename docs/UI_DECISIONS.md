@@ -7,6 +7,7 @@ This document records the design decisions for the research workspace redesign.
 - Make the Massive market-price data visible at the top of a completed research run.
 - Make LangGraph's streamed node lifecycle easy to scan while a run is active.
 - Reveal validated research artifacts as soon as their graph nodes complete.
+- Give deterministic research and open-ended agent chat distinct, understandable product modes.
 - Preserve a report-like reading experience for the final memo and analyst findings.
 - Keep the UI componentized and readable without hiding the design system inside a large component library.
 
@@ -21,34 +22,37 @@ This document records the design decisions for the research workspace redesign.
 | Styling                | Existing CSS variables and component classes                                | Keeps visual decisions explicit and avoids a migration to a utility framework for this milestone.                                        |
 | Component library      | No full UI kit yet                                                          | The project benefits more from domain-specific components than generic prebuilt cards and layouts.                                       |
 | Graph library          | No React Flow-style graph yet                                               | The workflow is best understood as a timeline in the primary user experience; the architecture diagram remains a documentation artifact. |
-| Assistant placement    | Full-width card on both landing and completed-research views                | Lets users ask immediately or follow up without mixing its tool loop into the committee timeline.                                        |
-| Landing empty state    | Replaced by the functional assistant card                                   | Gives first-time users an immediate alternative to running the full committee instead of a decorative placeholder.                       |
+| Product modes          | Top-level Committee research and Agent chat switch                          | Makes the difference between fixed graph orchestration and model-directed tool selection explicit.                                       |
+| Mode state             | Keep both mode workspaces mounted and visually hide the inactive one        | Preserves committee runs, approval state, chat history, and tool activity when users compare modes.                                      |
+| Agent workspace        | Dedicated introduction, capability summary, and ticker-free chat canvas     | Lets users ask naturally while keeping open-ended research out of the deterministic committee timeline.                                  |
+| Agent company scope    | Show the model-resolved ticker after its first validated tool call          | Makes entity resolution inspectable without requiring a setup form before the conversation.                                              |
 
 ## Component model
 
 ```text
-ResearchWorkspace
-├── CompanyHeader
-│   ├── PriceMetric
-│   ├── ReturnMetric
-│   └── MarketCapMetric
-├── ResearchToolbar
-├── SectionNavigation
-├── ResearchAssistantPanel
-│   ├── Conversation
-│   ├── ToolActivityTrace
-│   └── SourceLinks
-└── WorkspaceGrid
-    ├── VerticalResearchTimeline
-    └── ProgressiveResults
-        ├── MarketSnapshotPanel
-        │   ├── PriceChart
-        │   └── PeerComparison
-        ├── FundamentalsSnapshotPanel
-        ├── CommitteePanel
-        ├── ResearchMemo
-        ├── EvidencePanel
-        └── SkepticPanel
+ApplicationShell
+├── WorkspaceModeSwitch
+├── CommitteeResearchMode
+│   ├── CompanyHeader
+│   ├── ResearchToolbar
+│   ├── SectionNavigation
+│   └── WorkspaceGrid
+│       ├── VerticalResearchTimeline
+│       └── ProgressiveResults
+│           ├── MarketSnapshotPanel
+│           ├── FundamentalsSnapshotPanel
+│           ├── CommitteePanel
+│           ├── ResearchMemo
+│           ├── EvidencePanel
+│           └── SkepticPanel
+└── AgentWorkspace
+    ├── AgentCapabilities
+    ├── DevelopmentEvidenceSettings
+    └── ResearchAssistantPanel
+        ├── ResolvedTicker
+        ├── Conversation
+        ├── ToolActivityTrace
+        └── SourceLinks
 ```
 
 ## Interaction and accessibility
@@ -62,9 +66,10 @@ ResearchWorkspace
 - Section links provide direct navigation to market, fundamentals, committee, memo, and sources.
 - Chart tooltips expose the date and price for each historical point.
 - Motion is limited to small status transitions and respects `prefers-reduced-motion`.
-- Fixture/live SEC mode remains available only in development and is visually secondary to the research action.
+- Fixture/live SEC mode remains available only in development and is visually secondary to the conversation.
 - Conversational tool calls show readable names, validated arguments, and completion state without
   exposing raw tool payloads.
+- The active mode uses text, iconography, and `aria-current`; switching modes preserves local state.
 
 ## Scope boundary
 

@@ -2,15 +2,16 @@ import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 
 import type { RecentSecFilings } from '../../tools/sec-edgar.js';
+import { AssistantTickerSchema } from '../schemas.js';
 import type { ResearchToolContext } from './context.js';
 
 export function createSecResearchTools(context: ResearchToolContext) {
   const getSecFundamentals = tool(
-    async () => {
-      const result = await context.getFundamentals();
+    async ({ ticker }) => {
+      const result = await context.getFundamentals(ticker);
       context.collectSource(result.source);
       return JSON.stringify({
-        ticker: context.ticker,
+        ticker,
         companyName: result.companyName,
         fundamentals: result.fundamentals,
         sourceIds: [result.source.id],
@@ -19,21 +20,21 @@ export function createSecResearchTools(context: ResearchToolContext) {
     {
       name: 'get_sec_fundamentals',
       description:
-        'Get the active company’s latest complete annual SEC revenue, net income, and operating cash flow.',
-      schema: z.object({}),
+        'Get a company’s latest complete annual SEC revenue, net income, and operating cash flow. Resolve the company in the question to its U.S. ticker.',
+      schema: z.object({ ticker: AssistantTickerSchema }),
     },
   );
 
   const getRecentFilings = tool(
-    async ({ formTypes, limit }) => {
+    async ({ ticker, formTypes, limit }) => {
       const result: RecentSecFilings = await context.secClient.getRecentFilings(
-        context.ticker,
+        ticker,
         formTypes,
         limit,
       );
       result.filings.forEach((filing) => context.collectSource(filing.source));
       return JSON.stringify({
-        ticker: context.ticker,
+        ticker,
         companyName: result.companyName,
         filings: result.filings.map(({ source, ...filing }) => ({
           ...filing,
@@ -43,8 +44,10 @@ export function createSecResearchTools(context: ResearchToolContext) {
     },
     {
       name: 'get_recent_filings',
-      description: 'List recent SEC 10-K, 10-Q, or 8-K filings for the active company.',
+      description:
+        'List recent SEC 10-K, 10-Q, or 8-K filings for a company. Resolve the company in the question to its U.S. ticker.',
       schema: z.object({
+        ticker: AssistantTickerSchema,
         formTypes: z
           .array(z.enum(['10-K', '10-Q', '8-K']))
           .min(1)

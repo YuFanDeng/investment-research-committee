@@ -6,30 +6,41 @@ export type SecToolClient = Pick<SecEdgarClient, 'getFundamentals' | 'getRecentF
 export type MarketToolClient = Pick<MassiveClient, 'getMarketSnapshot' | 'getPriceHistory'>;
 
 export type CreateResearchToolContextOptions = {
-  ticker: string;
   secClient: SecToolClient;
   marketClient: MarketToolClient;
 };
 
 export function createResearchToolContext(options: CreateResearchToolContextOptions) {
   const sources = new Map<string, Source>();
-  let fundamentalsPromise: ReturnType<SecToolClient['getFundamentals']> | undefined;
-  let marketSnapshotPromise: ReturnType<MarketToolClient['getMarketSnapshot']> | undefined;
+  const fundamentalsByTicker = new Map<string, ReturnType<SecToolClient['getFundamentals']>>();
+  const marketSnapshotsByTicker = new Map<
+    string,
+    ReturnType<MarketToolClient['getMarketSnapshot']>
+  >();
 
   return {
-    ticker: options.ticker,
     secClient: options.secClient,
     marketClient: options.marketClient,
     collectSource(source: Source) {
       sources.set(source.id, source);
     },
-    getFundamentals() {
-      fundamentalsPromise ??= options.secClient.getFundamentals(options.ticker);
-      return fundamentalsPromise;
+    getFundamentals(ticker: string) {
+      const normalizedTicker = ticker.toUpperCase();
+      const existingRequest = fundamentalsByTicker.get(normalizedTicker);
+      if (existingRequest) return existingRequest;
+
+      const request = options.secClient.getFundamentals(normalizedTicker);
+      fundamentalsByTicker.set(normalizedTicker, request);
+      return request;
     },
-    getMarketSnapshot() {
-      marketSnapshotPromise ??= options.marketClient.getMarketSnapshot(options.ticker);
-      return marketSnapshotPromise;
+    getMarketSnapshot(ticker: string) {
+      const normalizedTicker = ticker.toUpperCase();
+      const existingRequest = marketSnapshotsByTicker.get(normalizedTicker);
+      if (existingRequest) return existingRequest;
+
+      const request = options.marketClient.getMarketSnapshot(normalizedTicker);
+      marketSnapshotsByTicker.set(normalizedTicker, request);
+      return request;
     },
     getSources() {
       return [...sources.values()];

@@ -15,14 +15,17 @@ function updateCompletedTool(
   );
 }
 
-export function useResearchAssistant(ticker: string, secDataMode: SecDataMode) {
+export function useResearchAssistant(secDataMode: SecDataMode) {
   const [messages, setMessages] = useState<AssistantMessage[]>([]);
   const [toolActivity, setToolActivity] = useState<AssistantToolActivity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>();
+  const [resolvedTicker, setResolvedTicker] = useState<string>();
 
   function handleEvent(event: AssistantEvent) {
-    if (event.type === 'tool.requested') {
+    if (event.type === 'ticker.resolved') {
+      setResolvedTicker(event.ticker);
+    } else if (event.type === 'tool.requested') {
       setToolActivity((current) => [
         ...current,
         { id: event.id, name: event.name, args: event.args, status: 'running' },
@@ -46,12 +49,13 @@ export function useResearchAssistant(ticker: string, secDataMode: SecDataMode) {
     const history = messages.slice(-6).map(({ role, content }) => ({ role, content }));
     setMessages((current) => [...current, { role: 'user', content: trimmedQuestion }]);
     setToolActivity([]);
+    setResolvedTicker(undefined);
     setError(undefined);
     setIsLoading(true);
 
     try {
       await streamAssistantQuestion(
-        { ticker, question: trimmedQuestion, secDataMode, history },
+        { question: trimmedQuestion, secDataMode, history },
         handleEvent,
       );
     } catch (caughtError) {
@@ -61,5 +65,5 @@ export function useResearchAssistant(ticker: string, secDataMode: SecDataMode) {
     }
   }
 
-  return { askQuestion, error, isLoading, messages, toolActivity };
+  return { askQuestion, error, isLoading, messages, resolvedTicker, toolActivity };
 }

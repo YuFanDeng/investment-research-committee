@@ -14,7 +14,8 @@ export type AssistantToolActivity = {
 };
 
 export type AssistantEvent =
-  | { type: 'assistant.started'; runId: string; ticker: string }
+  | { type: 'assistant.started'; runId: string }
+  | { type: 'ticker.resolved'; ticker: string }
   | {
       type: 'tool.requested';
       id: string;
@@ -26,7 +27,6 @@ export type AssistantEvent =
   | { type: 'assistant.failed'; message: string };
 
 export type AssistantRequest = {
-  ticker: string;
   question: string;
   secDataMode: SecDataMode;
   history: Array<Pick<AssistantMessage, 'role' | 'content'>>;

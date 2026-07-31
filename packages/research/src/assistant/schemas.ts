@@ -5,12 +5,13 @@ export const AssistantConversationMessageSchema = z.object({
   content: z.string().trim().min(1).max(2_000),
 });
 
+export const AssistantTickerSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z.]{1,10}$/, 'Use a valid U.S. ticker.');
+
 export const ResearchAssistantRequestSchema = z.object({
-  ticker: z
-    .string()
-    .trim()
-    .toUpperCase()
-    .regex(/^[A-Z.]{1,10}$/, 'Enter a valid U.S. ticker.'),
   question: z.string().trim().min(1).max(1_000),
   secDataMode: z.enum(['live', 'fixture']).default('live'),
   history: z.array(AssistantConversationMessageSchema).max(6).default([]),

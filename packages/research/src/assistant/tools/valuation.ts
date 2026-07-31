@@ -1,6 +1,7 @@
 import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 
+import { AssistantTickerSchema } from '../schemas.js';
 import type { ResearchToolContext } from './context.js';
 
 function round(value: number) {
@@ -9,10 +10,10 @@ function round(value: number) {
 
 export function createValuationResearchTools(context: ResearchToolContext) {
   const calculateValuationMetrics = tool(
-    async () => {
+    async ({ ticker }) => {
       const [sec, market] = await Promise.all([
-        context.getFundamentals(),
-        context.getMarketSnapshot(),
+        context.getFundamentals(ticker),
+        context.getMarketSnapshot(ticker),
       ]);
       context.collectSource(sec.source);
       context.collectSource(market.source);
@@ -20,7 +21,7 @@ export function createValuationResearchTools(context: ResearchToolContext) {
       const marketCap = market.snapshot.marketCap;
 
       return JSON.stringify({
-        ticker: context.ticker,
+        ticker,
         fiscalYear: fundamentals.fiscalYear,
         marketCap,
         priceToAnnualEarnings:
@@ -39,8 +40,8 @@ export function createValuationResearchTools(context: ResearchToolContext) {
     {
       name: 'calculate_valuation_metrics',
       description:
-        'Calculate deterministic earnings and operating-cash-flow screening multiples for the active company.',
-      schema: z.object({}),
+        'Calculate deterministic earnings and operating-cash-flow screening multiples for a company. Resolve the company in the question to its U.S. ticker.',
+      schema: z.object({ ticker: AssistantTickerSchema }),
     },
   );
 

@@ -6,7 +6,10 @@ investment committee and a conversational agent that selects read-only research 
 ```mermaid
 flowchart TB
     User[Investor / interviewer] --> Web[React + Vite dashboard]
-    Web -->|SSE request| API[Hono API]
+    Web --> CommitteeUI[Committee research mode]
+    Web --> AgentUI[Agent chat mode]
+    CommitteeUI -->|SSE request| API[Hono API]
+    AgentUI -->|SSE request| API
 
     subgraph Committee[Deterministic committee workflow]
         direction TB
@@ -27,7 +30,7 @@ flowchart TB
 
     subgraph Assistant[Conversational tool-calling workflow]
         direction TB
-        AgentGraph[LangGraph assistant graph] --> Model[Ollama chooses a tool or answers]
+        AgentGraph[LangGraph assistant graph] --> Model[Ollama resolves ticker and chooses a tool]
         Model -->|Validated tool call| ToolNode[Bounded ToolNode loop]
         ToolNode --> Catalog[Categorized tool catalog]
         Catalog --> SecTools[SEC fundamentals and filings]
@@ -55,7 +58,8 @@ flowchart TB
     Final --> ResearchEvents[Research lifecycle and artifact events]
     ResearchEvents -. SSE .-> API
     Answer -. SSE tool activity and answer .-> API
-    API -. incremental UI updates .-> Web
+    API -. lifecycle and artifact updates .-> CommitteeUI
+    API -. tool activity and answers .-> AgentUI
 ```
 
 ## Demo talking points

@@ -81,11 +81,14 @@ contract:
 ```text
 assistant.started
   ↓
+ticker.resolved
+  ↓
 tool.requested / tool.completed (zero to four times)
   ↓
 answer.completed
 ```
 
-The API derives these events from LangGraph agent and `ToolNode` updates. Raw model messages and
-full tool payloads remain server-side; the browser receives tool names, validated arguments, the
-final answer, and the collected source records.
+The API derives these events from LangGraph agent and `ToolNode` updates. `ticker.resolved` exposes
+the validated ticker argument selected by the model before the corresponding tool activity. Raw
+model messages and full tool payloads remain server-side; the browser receives the resolved ticker,
+tool names, validated arguments, the final answer, and the collected source records.

@@ -40,12 +40,10 @@ export async function streamAssistantQuestion(
     if (!eventName || !data) return;
 
     const payload = JSON.parse(data) as Record<string, unknown>;
-    if (
-      eventName === 'assistant.started' &&
-      typeof payload.runId === 'string' &&
-      typeof payload.ticker === 'string'
-    ) {
-      onEvent({ type: 'assistant.started', runId: payload.runId, ticker: payload.ticker });
+    if (eventName === 'assistant.started' && typeof payload.runId === 'string') {
+      onEvent({ type: 'assistant.started', runId: payload.runId });
+    } else if (eventName === 'ticker.resolved' && typeof payload.ticker === 'string') {
+      onEvent({ type: 'ticker.resolved', ticker: payload.ticker });
     } else if (
       eventName === 'tool.requested' &&
       typeof payload.id === 'string' &&

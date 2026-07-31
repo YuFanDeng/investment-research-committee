@@ -2,6 +2,7 @@ import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 
 import type { PriceHistoryResult } from '../../tools/massive.js';
+import { AssistantTickerSchema } from '../schemas.js';
 import type { ResearchToolContext } from './context.js';
 
 function round(value: number) {
@@ -45,12 +46,12 @@ function summarizePriceHistory(result: PriceHistoryResult) {
 
 export function createMarketResearchTools(context: ResearchToolContext) {
   const getMarketSnapshot = tool(
-    async () => {
-      const result = await context.getMarketSnapshot();
+    async ({ ticker }) => {
+      const result = await context.getMarketSnapshot(ticker);
       context.collectSource(result.source);
       const { historicalCloses: _history, ...compactSnapshot } = result.snapshot;
       return JSON.stringify({
-        ticker: context.ticker,
+        ticker,
         ...compactSnapshot,
         sourceIds: [result.source.id],
       });
@@ -58,22 +59,25 @@ export function createMarketResearchTools(context: ResearchToolContext) {
     {
       name: 'get_market_snapshot',
       description:
-        'Get the active company’s latest end-of-day price, market capitalization, and related companies.',
-      schema: z.object({}),
+        'Get a company’s latest end-of-day price, market capitalization, and related companies. Resolve the company in the question to its U.S. ticker.',
+      schema: z.object({ ticker: AssistantTickerSchema }),
     },
   );
 
   const getPriceHistory = tool(
-    async ({ days }) => {
-      const result = await context.marketClient.getPriceHistory(context.ticker, days);
+    async ({ ticker, days }) => {
+      const result = await context.marketClient.getPriceHistory(ticker, days);
       context.collectSource(result.source);
       return JSON.stringify(summarizePriceHistory(result));
     },
     {
       name: 'get_price_history',
       description:
-        'Get a compact price-performance summary for the active company over 30, 90, or 365 days.',
-      schema: z.object({ days: z.union([z.literal(30), z.literal(90), z.literal(365)]) }),
+        'Get a compact price-performance summary for a company over 30, 90, or 365 days. Resolve the company in the question to its U.S. ticker.',
+      schema: z.object({
+        ticker: AssistantTickerSchema,
+        days: z.union([z.literal(30), z.literal(90), z.literal(365)]),
+      }),
     },
   );
 

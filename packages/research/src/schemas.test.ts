@@ -30,12 +30,11 @@ describe('research schemas', () => {
 
   it('bounds conversational assistant input', () => {
     const result = ResearchAssistantRequestSchema.parse({
-      ticker: ' aapl ',
-      question: 'How has the stock performed?',
+      question: 'How has Apple performed?',
       history: [{ role: 'user', content: 'Start with the last year.' }],
     });
 
-    expect(result.ticker).toBe('AAPL');
+    expect(result).not.toHaveProperty('ticker');
     expect(result.history).toHaveLength(1);
   });
 });

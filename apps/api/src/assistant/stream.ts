@@ -1,4 +1,8 @@
-import type { ResearchAssistantRun, ResearchToolCall } from '@investment-research/research';
+import {
+  AssistantTickerSchema,
+  type ResearchAssistantRun,
+  type ResearchToolCall,
+} from '@investment-research/research';
 import { randomUUID } from 'node:crypto';
 
 import type { ResearchStreamWriter } from '../research/stream.js';
@@ -44,6 +48,7 @@ function toolCallsFromMessage(message: Record<string, unknown>): ResearchToolCal
 
 export async function streamAssistantRun(options: AssistantStreamOptions) {
   let finalAnswer = '';
+  let resolvedTicker = '';
   const graphStream = await options.run.graph.stream(options.run.input, {
     streamMode: 'updates',
     recursionLimit: 12,
@@ -61,6 +66,15 @@ export async function streamAssistantRun(options: AssistantStreamOptions) {
         const toolCalls = toolCallsFromMessage(message);
 
         for (const call of toolCalls) {
+          const tickerResult = AssistantTickerSchema.safeParse(call.args.ticker);
+          if (tickerResult.success && tickerResult.data !== resolvedTicker) {
+            resolvedTicker = tickerResult.data;
+            await options.stream.writeSSE({
+              event: 'ticker.resolved',
+              data: JSON.stringify({ ticker: resolvedTicker }),
+            });
+          }
+
           await options.stream.writeSSE({
             event: 'tool.requested',
             data: JSON.stringify(call),

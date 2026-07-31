@@ -29,7 +29,7 @@ export function createAssistantRoutes(options: AssistantRoutesOptions) {
       return streamSSE(context, async (stream) => {
         await stream.writeSSE({
           event: 'assistant.started',
-          data: JSON.stringify({ runId, ticker: request.ticker }),
+          data: JSON.stringify({ runId }),
         });
 
         try {

@@ -64,6 +64,13 @@ open-ended loop. The model may choose SEC fundamentals, filing metadata, market 
 price history, or deterministic valuation tools. Runs are capped at four tool calls and stream tool
 activity to the browser. See [Conversational tool-calling agent](TOOL_CALLING_AGENT.md).
 
+The React application presents the committee and assistant as separate top-level modes. Both mode
+trees remain mounted and the inactive tree uses the HTML `hidden` state, preserving local hook state
+when the user switches modes. Committee mode keeps its explicit ticker input. Agent mode has no
+ticker input: the model infers a ticker from natural language and supplies it as a required,
+Zod-validated argument to each company-data tool. This keeps provider calls deterministic and makes
+the model's company resolution visible through a `ticker.resolved` stream event.
+
 ## Ticker validation and SEC fundamentals
 
 The first graph validates a U.S. ticker using Zod, then performs these deterministic steps before any LLM is introduced:

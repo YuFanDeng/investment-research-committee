@@ -8,7 +8,7 @@ export type {
 export { createResearchModel, getModelSettings } from './model.js';
 export { createResearchAssistantRun, messageContentAsText } from './assistant/agent.js';
 export type { ResearchAssistantRun } from './assistant/agent.js';
-export { ResearchAssistantRequestSchema } from './assistant/schemas.js';
+export { AssistantTickerSchema, ResearchAssistantRequestSchema } from './assistant/schemas.js';
 export type {
   AssistantConversationMessage,
   ResearchAssistantRequest,

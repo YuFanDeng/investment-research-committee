@@ -20,7 +20,6 @@ const marketSource = {
 
 function createToolkit() {
   return createResearchTools({
-    ticker: 'TEST',
     secClient: {
       getFundamentals: async () => ({
         companyName: 'Test Company',
@@ -68,7 +67,10 @@ describe('research assistant tools', () => {
       (candidate) => candidate.name === 'calculate_valuation_metrics',
     );
 
-    const result = JSON.parse(String(await valuationTool!.invoke({}))) as Record<string, unknown>;
+    const result = JSON.parse(String(await valuationTool!.invoke({ ticker: 'TEST' }))) as Record<
+      string,
+      unknown
+    >;
 
     expect(result.priceToAnnualEarnings).toBe(20);
     expect(result.priceToAnnualOperatingCashFlow).toBe(16);
@@ -80,13 +82,20 @@ describe('research assistant tools', () => {
       (candidate) => candidate.name === 'get_price_history',
     );
 
-    const result = JSON.parse(String(await historyTool!.invoke({ days: 30 }))) as Record<
-      string,
-      unknown
-    >;
+    const result = JSON.parse(
+      String(await historyTool!.invoke({ ticker: 'TEST', days: 30 })),
+    ) as Record<string, unknown>;
 
     expect(result.returnPercent).toBe(20);
     expect(result.observationCount).toBe(2);
     expect(result).not.toHaveProperty('historicalCloses');
+  });
+
+  it('rejects an invalid ticker inferred by the model before calling a provider', async () => {
+    const fundamentalsTool = createToolkit().tools.find(
+      (candidate) => candidate.name === 'get_sec_fundamentals',
+    );
+
+    await expect(fundamentalsTool!.invoke({ ticker: 'Apple Inc.' })).rejects.toThrow();
   });
 });

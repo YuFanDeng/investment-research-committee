@@ -7,9 +7,7 @@ import type { AssistantToolActivity } from '../../types/assistant';
 import type { SecDataMode } from '../../types/research';
 
 type ResearchAssistantPanelProps = {
-  ticker: string;
   secDataMode: SecDataMode;
-  landing?: boolean;
 };
 
 const TOOL_LABELS: Record<string, string> = {
@@ -20,10 +18,16 @@ const TOOL_LABELS: Record<string, string> = {
   calculate_valuation_metrics: 'Valuation metrics',
 };
 
-const SUGGESTED_QUESTIONS = [
-  'How has the stock performed over the last year?',
-  'What do the latest fundamentals say?',
-  'What valuation limitations should I consider?',
+const LIVE_SUGGESTED_QUESTIONS = [
+  'How has Apple performed over the last year?',
+  "What do Microsoft's latest fundamentals say?",
+  'What valuation limitations should I consider for Nvidia?',
+];
+
+const FIXTURE_SUGGESTED_QUESTIONS = [
+  'How has Apple performed over the last year?',
+  "What do Apple's latest fundamentals say?",
+  'What valuation limitations should I consider for Apple?',
 ];
 
 function ToolActivity({ activity }: { activity: AssistantToolActivity }) {
@@ -47,18 +51,12 @@ function ToolActivity({ activity }: { activity: AssistantToolActivity }) {
   );
 }
 
-export function ResearchAssistantPanel({
-  ticker,
-  secDataMode,
-  landing = false,
-}: ResearchAssistantPanelProps) {
+export function ResearchAssistantPanel({ secDataMode }: ResearchAssistantPanelProps) {
   const [question, setQuestion] = useState('');
-  const hasValidTicker = /^[A-Z.]{1,10}$/.test(ticker);
-  const tickerLabel = hasValidTicker ? ticker : 'a valid ticker';
-  const { askQuestion, error, isLoading, messages, toolActivity } = useResearchAssistant(
-    ticker,
-    secDataMode,
-  );
+  const suggestions =
+    secDataMode === 'fixture' ? FIXTURE_SUGGESTED_QUESTIONS : LIVE_SUGGESTED_QUESTIONS;
+  const { askQuestion, error, isLoading, messages, resolvedTicker, toolActivity } =
+    useResearchAssistant(secDataMode);
 
   function submitQuestion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -69,7 +67,7 @@ export function ResearchAssistantPanel({
 
   return (
     <section
-      className={`assistant-panel ${landing ? 'is-landing' : ''}`}
+      className="assistant-panel is-standalone"
       id="ask-research"
       aria-labelledby="assistant-heading"
     >
@@ -78,11 +76,13 @@ export function ResearchAssistantPanel({
           <Sparkles size={19} />
         </span>
         <div>
-          <span className="section-kicker">Agentic follow-up</span>
-          <h2 id="assistant-heading">Ask the research desk</h2>
+          <span className="section-kicker">
+            {resolvedTicker ? `Resolved company · $${resolvedTicker}` : 'Company-aware research'}
+          </span>
+          <h2 id="assistant-heading">Agent conversation</h2>
           <p>
-            Ask a focused question about {tickerLabel}. The agent chooses up to four read-only tools
-            and shows its work.
+            Mention a company by name or ticker. The agent resolves it, chooses up to four read-only
+            tools, and shows its work.
           </p>
         </div>
         <span className="assistant-agent-badge">
@@ -92,11 +92,11 @@ export function ResearchAssistantPanel({
 
       {!messages.length ? (
         <div className="assistant-suggestions" aria-label="Suggested research questions">
-          {SUGGESTED_QUESTIONS.map((suggestion) => (
+          {suggestions.map((suggestion) => (
             <button
               type="button"
               key={suggestion}
-              disabled={isLoading || !hasValidTicker}
+              disabled={isLoading}
               onClick={() => void askQuestion(suggestion)}
             >
               {suggestion}
@@ -147,12 +147,6 @@ export function ResearchAssistantPanel({
       ) : null}
 
       {error ? <div className="assistant-error">{error}</div> : null}
-      {!hasValidTicker ? (
-        <div className="assistant-ticker-hint">
-          Enter a valid U.S. ticker above to ask the agent.
-        </div>
-      ) : null}
-
       <form className="assistant-composer" onSubmit={submitQuestion}>
         <label htmlFor="assistant-question" className="sr-only">
           Ask a research question
@@ -161,15 +155,11 @@ export function ResearchAssistantPanel({
           id="assistant-question"
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
-          placeholder={
-            hasValidTicker
-              ? `Ask about ${ticker} fundamentals, filings, price history, or valuation…`
-              : 'Enter a valid ticker in the research controls first…'
-          }
+          placeholder="Ask about a company, its filings, price history, fundamentals, or valuation…"
           maxLength={1_000}
-          disabled={isLoading || !hasValidTicker}
+          disabled={isLoading}
         />
-        <button type="submit" disabled={isLoading || !hasValidTicker || !question.trim()}>
+        <button type="submit" disabled={isLoading || !question.trim()}>
           {isLoading ? <LoaderCircle className="spin" size={16} /> : <Send size={16} />}
           Ask agent
         </button>

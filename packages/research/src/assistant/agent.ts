@@ -23,9 +23,9 @@ type ResearchAssistantRunOptions = {
   marketClient: Pick<MassiveClient, 'getMarketSnapshot' | 'getPriceHistory'>;
 };
 
-function systemPrompt(ticker: string) {
-  return `You are a read-only equity research assistant answering questions about ${ticker}.
-Choose only the tools needed to answer the user's question. Cite factual claims with the source IDs returned by tools using [source-id]. Distinguish reported facts from your inference. If evidence is missing, say so. Never invent figures, filing details, or sources. Do not provide personalized investment advice. Keep the final answer concise and educational.`;
+function systemPrompt() {
+  return `You are a read-only U.S. equity research assistant.
+For a company-specific question, infer the most likely U.S. ticker from the company name or symbol and pass that ticker to every tool. If the company is ambiguous, ask the user to clarify instead of guessing. For an obvious follow-up, use the company established by the recent conversation. State which ticker you researched in the final answer. Choose only the tools needed to answer the question. Cite factual claims with the source IDs returned by tools using [source-id]. Distinguish reported facts from your inference. If evidence is missing, say so. Never invent figures, filing details, or sources. Do not provide personalized investment advice. Keep the final answer concise and educational.`;
 }
 
 function conversationMessages(request: ResearchAssistantRequest): BaseMessage[] {
@@ -54,7 +54,6 @@ export function messageContentAsText(message?: BaseMessage) {
 
 export function createResearchAssistantRun(options: ResearchAssistantRunOptions) {
   const toolkit = createResearchTools({
-    ticker: options.request.ticker,
     secClient: options.secClient,
     marketClient: options.marketClient,
   });
@@ -63,7 +62,7 @@ export function createResearchAssistantRun(options: ResearchAssistantRunOptions)
 
   async function callModel(state: typeof MessagesAnnotation.State) {
     const response = await modelWithTools.invoke([
-      new SystemMessage(systemPrompt(options.request.ticker)),
+      new SystemMessage(systemPrompt()),
       ...state.messages,
     ]);
     return { messages: [response] };
@@ -75,7 +74,7 @@ export function createResearchAssistantRun(options: ResearchAssistantRunOptions)
     const completedConversation = state.messages.slice(0, -1);
     const response = await model.invoke([
       new SystemMessage(
-        `${systemPrompt(options.request.ticker)} The four-tool limit has been reached. Answer using only evidence already present in the conversation and mention important missing evidence.`,
+        `${systemPrompt()} The four-tool limit has been reached. Answer using only evidence already present in the conversation and mention important missing evidence.`,
       ),
       ...completedConversation,
     ]);

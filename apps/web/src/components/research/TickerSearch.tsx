@@ -11,6 +11,11 @@ type TickerSearchProps = {
   secDataMode: SecDataMode;
   onSecDataModeChange: (mode: SecDataMode) => void;
   compact?: boolean;
+  label?: string;
+  contextLabel?: string;
+  submitLabel?: string;
+  hint?: string;
+  idPrefix?: string;
 };
 
 export function TickerSearch({
@@ -22,24 +27,31 @@ export function TickerSearch({
   secDataMode,
   onSecDataModeChange,
   compact = false,
+  label = 'Research a company',
+  contextLabel = 'U.S. equities · SEC EDGAR',
+  submitLabel = 'Run research',
+  hint = 'Try AAPL, MSFT, NVDA, or another listed U.S. ticker.',
+  idPrefix = 'research',
 }: TickerSearchProps) {
+  const tickerInputId = `${idPrefix}-ticker`;
+
   return (
     <form className={`ticker-form ${compact ? 'ticker-form-compact' : ''}`} onSubmit={onSubmit}>
       {compact ? (
-        <label className="sr-only" htmlFor="ticker">
+        <label className="sr-only" htmlFor={tickerInputId}>
           Research another company
         </label>
       ) : (
         <div className="field-label-row">
-          <label htmlFor="ticker">Research a company</label>
-          <span>U.S. equities · SEC EDGAR</span>
+          <label htmlFor={tickerInputId}>{label}</label>
+          <span>{contextLabel}</span>
         </div>
       )}
       <div className="ticker-input-row">
         <div className="ticker-input-wrap">
           <span className="ticker-prefix">$</span>
           <input
-            id="ticker"
+            id={tickerInputId}
             value={ticker}
             onChange={(event) => onChange(event.target.value.toUpperCase())}
             placeholder="AAPL"
@@ -49,7 +61,7 @@ export function TickerSearch({
           />
         </div>
         <button className="primary-button" type="submit" disabled={isLoading || !ticker.trim()}>
-          {isLoading ? 'Researching…' : 'Run research'}
+          {isLoading ? 'Researching…' : submitLabel}
           <span aria-hidden="true">↗</span>
         </button>
       </div>
@@ -59,7 +71,7 @@ export function TickerSearch({
           <label>
             <input
               type="radio"
-              name="sec-data-mode"
+              name={`${idPrefix}-sec-data-mode`}
               checked={secDataMode === 'fixture'}
               onChange={() => onSecDataModeChange('fixture')}
             />
@@ -68,7 +80,7 @@ export function TickerSearch({
           <label>
             <input
               type="radio"
-              name="sec-data-mode"
+              name={`${idPrefix}-sec-data-mode`}
               checked={secDataMode === 'live'}
               onChange={() => onSecDataModeChange('live')}
             />
@@ -76,9 +88,7 @@ export function TickerSearch({
           </label>
         </fieldset>
       ) : null}
-      {compact ? null : (
-        <p className="form-hint">Try AAPL, MSFT, NVDA, or another listed U.S. ticker.</p>
-      )}
+      {compact ? null : <p className="form-hint">{hint}</p>}
     </form>
   );
 }

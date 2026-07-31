@@ -138,6 +138,80 @@ button:disabled {
   padding: clamp(2rem, 5vw, 4.5rem) clamp(1rem, 4vw, 4rem) 6rem;
 }
 
+.mode-switch {
+  background: #edf0f7;
+  border: 1px solid var(--line);
+  border-radius: 1.05rem;
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: clamp(2rem, 4vw, 3.5rem);
+  max-width: 680px;
+  padding: 0.35rem;
+}
+
+.mode-switch button {
+  align-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  color: var(--muted);
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 0.75rem 0.85rem;
+  text-align: left;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease;
+}
+
+.mode-switch button:hover:not(.is-active) {
+  color: var(--soft);
+}
+
+.mode-switch button.is-active {
+  background: var(--surface);
+  border-color: #ffffff;
+  box-shadow: 0 4px 14px #27324812;
+  color: var(--ink);
+}
+
+.mode-switch-icon {
+  align-items: center;
+  background: #e2e6ef;
+  border-radius: 0.6rem;
+  display: inline-flex;
+  height: 2.15rem;
+  justify-content: center;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+  width: 2.15rem;
+}
+
+.mode-switch .is-active .mode-switch-icon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.mode-switch strong,
+.mode-switch small {
+  display: block;
+}
+
+.mode-switch strong {
+  font-size: 0.76rem;
+}
+
+.mode-switch small {
+  color: var(--muted);
+  font-size: 0.62rem;
+  margin-top: 0.18rem;
+}
+
 .section-kicker {
   align-items: center;
   color: var(--accent);
@@ -176,6 +250,113 @@ button:disabled {
   line-height: 1.7;
   margin: 0;
   max-width: 660px;
+}
+
+.agent-workspace {
+  margin: 0 auto;
+  max-width: 1180px;
+}
+
+.agent-intro {
+  align-items: end;
+  display: grid;
+  gap: clamp(2rem, 5vw, 5rem);
+  grid-template-columns: minmax(0, 1.25fr) minmax(18rem, 0.75fr);
+}
+
+.agent-intro h1 {
+  color: var(--ink);
+  font-size: clamp(2.8rem, 6vw, 5.5rem);
+  letter-spacing: -0.07em;
+  line-height: 0.96;
+  margin: 0 0 1.25rem;
+}
+
+.agent-intro h1 em {
+  background: linear-gradient(90deg, var(--accent), #7567e9);
+  background-clip: text;
+  color: transparent;
+  font-style: normal;
+}
+
+.agent-intro > div > p {
+  color: var(--soft);
+  line-height: 1.7;
+  margin: 0;
+  max-width: 650px;
+}
+
+.agent-capabilities {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.agent-capabilities > div {
+  align-items: center;
+  background: #ffffffa6;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: auto 1fr;
+  padding: 0.72rem;
+}
+
+.agent-capabilities > div > span {
+  align-items: center;
+  background: var(--accent-soft);
+  border-radius: 0.6rem;
+  color: var(--accent);
+  display: inline-flex;
+  height: 2.1rem;
+  justify-content: center;
+  width: 2.1rem;
+}
+
+.agent-capabilities p,
+.agent-capabilities strong,
+.agent-capabilities small {
+  display: block;
+  margin: 0;
+}
+
+.agent-capabilities strong {
+  color: var(--ink);
+  font-size: 0.7rem;
+}
+
+.agent-capabilities small {
+  color: var(--muted);
+  font-size: 0.61rem;
+  margin-top: 0.14rem;
+}
+
+.agent-settings {
+  align-items: center;
+  background: #ffffffa6;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 2rem;
+  padding: 0.7rem 0.85rem;
+}
+
+.agent-settings > span {
+  color: var(--ink);
+  font-size: 0.66rem;
+  font-weight: 750;
+}
+
+.agent-settings .data-mode-toggle {
+  margin: 0;
+}
+
+.agent-settings > small {
+  color: var(--muted);
+  font-size: 0.59rem;
+  margin-left: auto;
 }
 
 .ticker-form {
@@ -470,9 +651,20 @@ button:disabled {
   padding: clamp(1.1rem, 2.5vw, 1.7rem);
 }
 
-.assistant-panel.is-landing {
+.assistant-panel.is-standalone {
+  border-color: #cfd1ff;
   margin-top: 1.25rem;
-  max-width: 920px;
+  min-height: 27rem;
+  padding: clamp(1.25rem, 3vw, 2.15rem);
+}
+
+.assistant-panel.is-standalone .assistant-conversation {
+  max-height: 38rem;
+  min-height: 12rem;
+}
+
+.assistant-panel.is-standalone .assistant-composer {
+  margin-top: 1.4rem;
 }
 
 .assistant-panel-heading {
@@ -747,15 +939,6 @@ button:disabled {
   background: var(--danger-soft);
   border-radius: 0.65rem;
   color: var(--danger);
-  font-size: 0.68rem;
-  margin-bottom: 0.7rem;
-  padding: 0.65rem 0.75rem;
-}
-
-.assistant-ticker-hint {
-  background: var(--warning-soft);
-  border-radius: 0.65rem;
-  color: var(--warning);
   font-size: 0.68rem;
   margin-bottom: 0.7rem;
   padding: 0.65rem 0.75rem;
@@ -1706,6 +1889,15 @@ button:disabled {
 }
 
 @media (max-width: 900px) {
+  .agent-intro {
+    align-items: start;
+    grid-template-columns: 1fr;
+  }
+
+  .agent-capabilities {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   .ticker-form-compact .data-mode-toggle {
     position: static;
   }
@@ -1744,6 +1936,27 @@ button:disabled {
 
   .app-main {
     padding-inline: 0.85rem;
+  }
+
+  .mode-switch {
+    margin-bottom: 2rem;
+  }
+
+  .mode-switch button {
+    gap: 0.45rem;
+    padding: 0.6rem;
+  }
+
+  .mode-switch-icon {
+    display: none;
+  }
+
+  .mode-switch small {
+    display: none;
+  }
+
+  .agent-capabilities {
+    grid-template-columns: 1fr;
   }
 
   .company-header {

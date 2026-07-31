@@ -11,9 +11,10 @@ This gives the product two complementary modes:
 - **Committee research** runs a known sequence of specialist agents, critique, and human approval.
 - **Ask research** lets the model decide which evidence is necessary for a focused question.
 
-The same assistant is available on the landing page and after a committee run. On the landing page
-it uses the ticker and SEC mode in the main research controls, so a user does not need to run the
-full committee before asking a focused question.
+The assistant is available through a dedicated **Agent chat** mode beside **Committee research**.
+The user mentions a company naturally in the question instead of configuring a ticker first. The
+model resolves the likely U.S. ticker as a validated tool argument, and the UI displays that choice.
+Switching modes preserves both the conversation and committee state.
 
 ## Initial tool catalog
 
@@ -25,8 +26,10 @@ full committee before asking a focused question.
 | `get_price_history`           | Summarize a bounded 30, 90, or 365-day price range.                          |
 | `calculate_valuation_metrics` | Calculate earnings and cash-flow multiples deterministically.                |
 
-Tools return compact JSON with source IDs. The model chooses tools and explains results, while
-TypeScript performs data retrieval and calculations.
+Every company-data tool requires a Zod-validated ticker argument. Tools return compact JSON with
+source IDs. The model resolves the company, chooses tools, and explains results, while TypeScript
+validates inputs and performs data retrieval and calculations. An ambiguous company should produce
+a clarification question rather than a guessed tool call.
 
 ## Tool organization
 
@@ -64,7 +67,7 @@ the UI can show which tool was requested and when it completed.
 ## Guardrails
 
 - Tools are read-only and have Zod-validated inputs.
-- Tickers are normalized before entering the graph.
+- Tickers inferred by the model are normalized and validated at every tool boundary.
 - Conversation history is limited to six messages.
 - Questions are limited to 1,000 characters.
 - One run can execute at most four tool calls.
