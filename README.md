@@ -12,7 +12,7 @@ The project provides a complete multi-agent research demo:
 4. Run fundamentals, business quality, and valuation analysts with a chair draft and skeptic challenge.
 5. Pause after the skeptic challenge for a human approve, revise, or reject decision.
 6. Display a historical price chart, analyst reports, source trail, and approved final memo.
-7. Ask naturally in a dedicated agent-chat mode where the model resolves the ticker and selects SEC, market, or valuation tools.
+7. Ask naturally in a dedicated agent-chat mode where the model resolves the ticker and selects SEC, market, valuation, or moving-average tools.
 
 Local Ollama generation is optional; deterministic fallbacks keep the workflow usable when the model is unavailable.
 
@@ -51,9 +51,11 @@ flowchart TB
         Catalog --> SecTools[SEC fundamentals and filings]
         Catalog --> MarketTools[Snapshot and price history]
         Catalog --> ValuationTools[Deterministic valuation metrics]
+        Catalog --> TechnicalTools[Deterministic moving averages]
         SecTools --> ToolResult[Compact sourced tool result]
         MarketTools --> ToolResult
         ValuationTools --> ToolResult
+        TechnicalTools --> ToolResult
         ToolResult -->|ToolMessage| Model
         Model -->|No tool call| Answer[Source-backed answer]
     end
@@ -67,6 +69,7 @@ flowchart TB
     Massive --> MarketTools
     SEC --> ValuationTools
     Massive --> ValuationTools
+    Massive --> TechnicalTools
     Ollama[(Local Ollama model)] -. structured generation .-> Analysts
     Ollama -. tool selection and response .-> Model
 
@@ -120,6 +123,7 @@ pnpm format:check  # Verify formatting without changing files
 - [Streaming design](docs/STREAMING.md)
 - [Human approval interrupts](docs/HUMAN_APPROVAL.md)
 - [Conversational tool-calling agent](docs/TOOL_CALLING_AGENT.md)
+- [Technical analysis tools](docs/TECHNICAL_ANALYSIS.md)
 - [Market-data provider](docs/MARKET_DATA_PROVIDER.md)
 - [Testing strategy](docs/TESTING.md)
 - [Interview architecture](docs/ARCHITECTURE.md)

@@ -13,6 +13,11 @@ The conversational agent reuses the same per-request SEC mode. Tool tests use in
 assert deterministic calculations, compact price-history output, source collection, and filing
 metadata without calling external services or Ollama.
 
+Moving-average tests use synthetic, intentionally unsorted closes to verify chronological sorting,
+exact SMA values, above/below classification, insufficient-history behavior, supported-period
+validation, custom 120-session requests, duplicate normalization, and reuse of cached 365-day
+Massive history across tools.
+
 ## Fixture
 
 The fixture is the raw SEC Company Facts response captured for Apple:

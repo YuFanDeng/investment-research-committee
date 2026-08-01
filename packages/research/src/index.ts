@@ -23,6 +23,13 @@ export {
 export { SecEdgarClient, SecEdgarError } from './tools/sec-edgar.js';
 export type { RecentSecFilings, SecFiling } from './tools/sec-edgar.js';
 export { MassiveClient, MassiveError } from './tools/massive.js';
+export {
+  calculateSimpleMovingAverages,
+  COMMON_MOVING_AVERAGE_PERIODS,
+  MAX_MOVING_AVERAGE_PERIOD,
+  MIN_MOVING_AVERAGE_PERIOD,
+} from './technical/moving-average.js';
+export type { MovingAverage, MovingAveragePeriod } from './technical/moving-average.js';
 export { FixtureSecEdgarClient } from './tools/mock-data.js';
 export {
   FundamentalsSchema,

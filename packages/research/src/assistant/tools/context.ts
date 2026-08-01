@@ -17,6 +17,10 @@ export function createResearchToolContext(options: CreateResearchToolContextOpti
     string,
     ReturnType<MarketToolClient['getMarketSnapshot']>
   >();
+  const priceHistoryByTickerAndRange = new Map<
+    string,
+    ReturnType<MarketToolClient['getPriceHistory']>
+  >();
 
   return {
     secClient: options.secClient,
@@ -40,6 +44,16 @@ export function createResearchToolContext(options: CreateResearchToolContextOpti
 
       const request = options.marketClient.getMarketSnapshot(normalizedTicker);
       marketSnapshotsByTicker.set(normalizedTicker, request);
+      return request;
+    },
+    getPriceHistory(ticker: string, days: 30 | 90 | 365) {
+      const normalizedTicker = ticker.toUpperCase();
+      const cacheKey = `${normalizedTicker}:${days}`;
+      const existingRequest = priceHistoryByTickerAndRange.get(cacheKey);
+      if (existingRequest) return existingRequest;
+
+      const request = options.marketClient.getPriceHistory(normalizedTicker, days);
+      priceHistoryByTickerAndRange.set(cacheKey, request);
       return request;
     },
     getSources() {

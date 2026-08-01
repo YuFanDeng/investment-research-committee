@@ -21,6 +21,7 @@ React dashboard.
 - [x] Add technical decision, testing, streaming, market-data, UI, and architecture documentation.
 - [x] Add a checkpointed human approval interrupt before final chair synthesis.
 - [x] Add a bounded conversational agent with visible read-only tool calls.
+- [x] Add deterministic 2–250-session moving averages with common 5, 10, 20, 50, 100, and 200 defaults.
 - [x] Add formatting, type checking, tests, and production build checks.
 
 ## Next milestones
@@ -28,6 +29,7 @@ React dashboard.
 - [ ] Add screenshot examples and a short evaluation report for the interview demo.
 - [ ] Add stronger analyst evaluation fixtures and regression tests for memo quality.
 - [ ] Add durable run history with a database and LangGraph checkpointer.
+- [ ] Add EMA, crossover, and chart-overlay technical analysis after the SMA tool is evaluated.
 - [ ] Add richer market-data ranges and explicit valuation multiples when the provider supports them.
 - [ ] Add authentication and portfolio features only if the product scope expands beyond the demo.
 

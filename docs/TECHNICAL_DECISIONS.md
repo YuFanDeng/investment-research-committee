@@ -25,6 +25,7 @@ This document records the initial implementation choices for the Investment Rese
 | Conversational agent    | Bounded LangGraph `ToolNode` loop                 | Lets the model select read-only research functions while preserving explicit limits and visible execution.           |
 | Tool result strategy    | Compact structured JSON with source IDs           | Keeps tool evidence auditable and protects the local model's 4,096-token context window.                             |
 | Tool organization       | Domain category modules plus a shared catalog     | Keeps SEC, market, valuation, and future tool families independently readable and testable.                          |
+| Technical indicators    | Pure TypeScript calculations over Massive closes  | Keeps arithmetic deterministic, testable, compact, and independent from model reasoning.                             |
 
 ## Architecture
 
@@ -61,8 +62,9 @@ feature of the interactive SSE workflow, where a stable run ID is available for 
 
 Focused questions use a separate tool-calling graph instead of changing the committee into an
 open-ended loop. The model may choose SEC fundamentals, filing metadata, market snapshot, bounded
-price history, or deterministic valuation tools. Runs are capped at four tool calls and stream tool
-activity to the browser. See [Conversational tool-calling agent](TOOL_CALLING_AGENT.md).
+price history, deterministic valuation, or moving-average tools. Runs are capped at four tool calls
+and stream tool activity to the browser. See
+[Conversational tool-calling agent](TOOL_CALLING_AGENT.md).
 
 The React application presents the committee and assistant as separate top-level modes. Both mode
 trees remain mounted and the inactive tree uses the HTML `hidden` state, preserving local hook state
@@ -70,6 +72,16 @@ when the user switches modes. Committee mode keeps its explicit ticker input. Ag
 ticker input: the model infers a ticker from natural language and supplies it as a required,
 Zod-validated argument to each company-data tool. This keeps provider calls deterministic and makes
 the model's company resolution visible through a `ticker.resolved` stream event.
+
+## Technical indicators
+
+The first technical-analysis tool calculates simple moving averages for any integer period from 2
+through 250 trading sessions. The common 5, 10, 20, 50, 100, and 200-session periods remain
+discoverable defaults rather than a restrictive allowlist. A pure calculation module sorts adjusted
+daily closes, normalizes duplicate periods, uses the latest `N` observations, and reports the latest
+price's distance and position relative to each average. The assistant context caches 365-day history
+so price-performance and moving-average tools can reuse one Massive request. See
+[Technical analysis tools](TECHNICAL_ANALYSIS.md).
 
 ## Ticker validation and SEC fundamentals
 

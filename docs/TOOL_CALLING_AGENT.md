@@ -25,6 +25,7 @@ Switching modes preserves both the conversation and committee state.
 | `get_market_snapshot`         | Retrieve the latest end-of-day price, market cap, and related companies.     |
 | `get_price_history`           | Summarize a bounded 30, 90, or 365-day price range.                          |
 | `calculate_valuation_metrics` | Calculate earnings and cash-flow multiples deterministically.                |
+| `calculate_moving_averages`   | Calculate common simple moving averages from adjusted daily closes.          |
 
 Every company-data tool requires a Zod-validated ticker argument. Tools return compact JSON with
 source IDs. The model resolves the company, chooses tools, and explains results, while TypeScript
@@ -42,6 +43,7 @@ assistant/tools/
 ├── context.ts    # Per-run clients, request cache, and source collection
 ├── sec.ts        # SEC fundamentals and filing tools
 ├── market.ts     # Market snapshot and price-history tools
+├── technical.ts  # Deterministic technical-indicator tools
 └── valuation.ts  # Deterministic valuation tools
 ```
 
@@ -72,8 +74,11 @@ the UI can show which tool was requested and when it completed.
 - Questions are limited to 1,000 characters.
 - One run can execute at most four tool calls.
 - Price ranges are restricted to 30, 90, or 365 days.
+- Moving-average periods accept one to six integer values from 2 through 250 trading sessions;
+  common defaults are 20, 50, and 200.
 - Price history is summarized before reaching the model to protect the 4,096-token context window.
-- Financial ratios are calculated from retrieved values, never by model arithmetic.
+- Financial ratios and technical indicators are calculated from retrieved values, never by model
+  arithmetic.
 - Every external result retains source IDs, URLs, and retrieval timestamps.
 - The answer must distinguish reported facts from inference and must not give personalized advice.
 
@@ -90,3 +95,4 @@ pretending that an autonomous tool decision occurred.
 - The in-memory execution is suitable for a local interview demo, not a multi-instance deployment.
 - Valuation metrics use annual SEC facts and end-of-day market capitalization; they are educational
   screening ratios, not a full valuation model.
+- Moving averages use historical daily closes and describe price position, not a trading signal.

@@ -66,7 +66,7 @@ export function createMarketResearchTools(context: ResearchToolContext) {
 
   const getPriceHistory = tool(
     async ({ ticker, days }) => {
-      const result = await context.marketClient.getPriceHistory(ticker, days);
+      const result = await context.getPriceHistory(ticker, days);
       context.collectSource(result.source);
       return JSON.stringify(summarizePriceHistory(result));
     },

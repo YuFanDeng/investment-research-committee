@@ -16,16 +16,17 @@ const TOOL_LABELS: Record<string, string> = {
   get_market_snapshot: 'Market snapshot',
   get_price_history: 'Price history',
   calculate_valuation_metrics: 'Valuation metrics',
+  calculate_moving_averages: 'Moving averages',
 };
 
 const LIVE_SUGGESTED_QUESTIONS = [
-  'How has Apple performed over the last year?',
+  'Is Apple above its 200-day moving average?',
   "What do Microsoft's latest fundamentals say?",
   'What valuation limitations should I consider for Nvidia?',
 ];
 
 const FIXTURE_SUGGESTED_QUESTIONS = [
-  'How has Apple performed over the last year?',
+  'Is Apple above its 200-day moving average?',
   "What do Apple's latest fundamentals say?",
   'What valuation limitations should I consider for Apple?',
 ];
@@ -155,7 +156,7 @@ export function ResearchAssistantPanel({ secDataMode }: ResearchAssistantPanelPr
           id="assistant-question"
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
-          placeholder="Ask about a company, its filings, price history, fundamentals, or valuation…"
+          placeholder="Ask about a company, its filings, price trends, fundamentals, or valuation…"
           maxLength={1_000}
           disabled={isLoading}
         />

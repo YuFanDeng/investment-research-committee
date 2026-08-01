@@ -36,9 +36,11 @@ flowchart TB
         Catalog --> SecTools[SEC fundamentals and filings]
         Catalog --> MarketTools[Snapshot and price history]
         Catalog --> ValuationTools[Deterministic valuation metrics]
+        Catalog --> TechnicalTools[Deterministic moving averages]
         SecTools --> ToolResult[Compact sourced tool result]
         MarketTools --> ToolResult
         ValuationTools --> ToolResult
+        TechnicalTools --> ToolResult
         ToolResult -->|ToolMessage| Model
         Model -->|No tool call| Answer[Source-backed answer]
     end
@@ -52,6 +54,7 @@ flowchart TB
     Massive --> MarketTools
     SEC --> ValuationTools
     Massive --> ValuationTools
+    Massive --> TechnicalTools
     Ollama[(Local Ollama model)] -. structured generation .-> Analysts
     Ollama -. tool selection and response .-> Model
 

@@ -15,7 +15,7 @@ The first data-research vertical slice is complete:
 - The SEC client selects complete annual revenue, net income, and operating cash flow from a common reporting-period end date. This avoids mistaking comparative figures in a later filing for the current fiscal year.
 - Invalid or unrecognized tickers produce a structured workflow error rather than an unsupported memo.
 - A separate bounded LangGraph agent can answer focused follow-up questions by selecting SEC,
-  market, price-history, and deterministic valuation tools.
+  market, price-history, moving-average, and deterministic valuation tools.
 - Tool activity and linked sources stream into the React workspace so users can inspect how each
   answer was assembled.
 

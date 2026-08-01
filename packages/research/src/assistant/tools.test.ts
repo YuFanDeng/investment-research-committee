@@ -18,7 +18,7 @@ const marketSource = {
   retrievedAt: '2026-07-31T00:00:00.000Z',
 };
 
-function createToolkit() {
+function createToolkit(onPriceHistoryRequest: () => void = () => undefined) {
   return createResearchTools({
     secClient: {
       getFundamentals: async () => ({
@@ -47,15 +47,18 @@ function createToolkit() {
         },
         source: marketSource,
       }),
-      getPriceHistory: async (_ticker, days) => ({
-        ticker: 'TEST',
-        days,
-        historicalCloses: [
-          { date: '2026-07-01', close: 10 },
-          { date: '2026-07-31', close: 12 },
-        ],
-        source: marketSource,
-      }),
+      getPriceHistory: async (_ticker, days) => {
+        onPriceHistoryRequest();
+        return {
+          ticker: 'TEST',
+          days,
+          historicalCloses: [
+            { date: '2026-07-01', close: 10 },
+            { date: '2026-07-31', close: 12 },
+          ],
+          source: marketSource,
+        };
+      },
     },
   });
 }
@@ -97,5 +100,51 @@ describe('research assistant tools', () => {
     );
 
     await expect(fundamentalsTool!.invoke({ ticker: 'Apple Inc.' })).rejects.toThrow();
+  });
+
+  it('reuses cached 365-day history across market and technical tools', async () => {
+    let priceHistoryRequests = 0;
+    const toolkit = createToolkit(() => {
+      priceHistoryRequests += 1;
+    });
+    const historyTool = toolkit.tools.find((candidate) => candidate.name === 'get_price_history');
+    const movingAverageTool = toolkit.tools.find(
+      (candidate) => candidate.name === 'calculate_moving_averages',
+    );
+
+    await historyTool!.invoke({ ticker: 'TEST', days: 365 });
+    const result = JSON.parse(
+      String(await movingAverageTool!.invoke({ ticker: 'TEST', periods: [120, 120] })),
+    ) as Record<string, unknown>;
+
+    expect(priceHistoryRequests).toBe(1);
+    expect(result).toMatchObject({
+      ticker: 'TEST',
+      calculation: 'simple_moving_average',
+      observationCount: 2,
+      movingAverages: [
+        {
+          period: 120,
+          status: 'insufficient_data',
+          requiredObservations: 120,
+          availableObservations: 2,
+        },
+      ],
+    });
+    expect(result).not.toHaveProperty('historicalCloses');
+  });
+
+  it('rejects out-of-range or fractional periods before requesting market data', async () => {
+    let priceHistoryRequests = 0;
+    const movingAverageTool = createToolkit(() => {
+      priceHistoryRequests += 1;
+    }).tools.find((candidate) => candidate.name === 'calculate_moving_averages');
+
+    for (const invalidPeriod of [1, 251, 12.5]) {
+      await expect(
+        movingAverageTool!.invoke({ ticker: 'TEST', periods: [invalidPeriod] }),
+      ).rejects.toThrow();
+    }
+    expect(priceHistoryRequests).toBe(0);
   });
 });
