@@ -9,11 +9,14 @@
     "check": "tsc -b --pretty false"
   },
   "dependencies": {
+    "@investment-research/research": "workspace:^",
     "@vitejs/plugin-react": "^4.4.0",
     "lucide-react": "^1.26.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
     "recharts": "^3.10.0",
+    "remark-gfm": "^4.0.1",
     "vite": "^6.3.0"
   },
   "devDependencies": {

@@ -17,5 +17,6 @@ export function createResearchTools(options: CreateResearchToolContextOptions) {
       ...createValuationResearchTools(context),
     ],
     getSources: context.getSources,
+    getContentBlocks: context.getContentBlocks,
   };
 }

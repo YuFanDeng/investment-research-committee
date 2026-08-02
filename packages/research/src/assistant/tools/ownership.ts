@@ -2,6 +2,7 @@ import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 
 import { AssistantTickerSchema } from '../schemas.js';
+import { createInsiderTransactionBlocks } from '../content-block-builders.js';
 import type { ResearchToolContext } from './context.js';
 import {
   INSIDER_ACTIVITY_TYPES,
@@ -97,6 +98,15 @@ export function createOwnershipResearchTools(context: ResearchToolContext) {
       const returnedSourceIds = new Set(returnedSources.map((source) => source.id));
       returnedSources.forEach(context.collectSource);
 
+      const summary = summarizeInsiderTransactions(filteredTransactions);
+      const transactions = returnedTransactions.map((transaction) =>
+        compactInsiderTransaction(transaction, returnedSourceIds),
+      );
+      const sourceIds = [...returnedSourceIds];
+      createInsiderTransactionBlocks(ticker, summary, transactions, sourceIds).forEach(
+        context.collectContentBlock,
+      );
+
       return JSON.stringify({
         ticker,
         query: {
@@ -119,15 +129,13 @@ export function createOwnershipResearchTools(context: ResearchToolContext) {
         matchedTransactionCount: filteredTransactions.length,
         providerResultTruncated: Boolean(result.nextUrl),
         summaryScope: 'all_matched_transactions_in_bounded_scan',
-        summary: summarizeInsiderTransactions(filteredTransactions),
+        summary,
         detailScope:
           filteredTransactions.length > returnedTransactions.length
             ? 'representative_bounded_selection'
             : 'all_matched_transactions',
-        transactions: returnedTransactions.map((transaction) =>
-          compactInsiderTransaction(transaction, returnedSourceIds),
-        ),
-        sourceIds: [...returnedSourceIds],
+        transactions,
+        sourceIds,
         interpretationNotes: [
           'A reported 10b5-1 plan is context, not proof of an insider’s motivation.',
           'Indirect ownership still represents reported beneficial ownership through another person or entity.',

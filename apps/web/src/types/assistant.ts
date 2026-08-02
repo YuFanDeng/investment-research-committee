@@ -3,7 +3,13 @@ import type { SecDataMode, Source } from './research';
 export type AssistantMessage = {
   role: 'user' | 'assistant';
   content: string;
+  presentation?: AssistantPresentation;
   sources?: Source[];
+};
+
+export type AssistantPresentation = {
+  version: number;
+  blocks: unknown[];
 };
 
 export type AssistantToolActivity = {
@@ -23,7 +29,12 @@ export type AssistantEvent =
       args: Record<string, unknown>;
     }
   | { type: 'tool.completed'; id: string; name: string }
-  | { type: 'answer.completed'; answer: string; sources: Source[] }
+  | {
+      type: 'answer.completed';
+      answer: string;
+      presentation: AssistantPresentation;
+      sources: Source[];
+    }
   | { type: 'assistant.failed'; message: string };
 
 export type AssistantRequest = {

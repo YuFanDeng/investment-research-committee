@@ -28,6 +28,9 @@ This document records the initial implementation choices for the Investment Rese
 | Technical indicators    | Pure TypeScript calculations over Massive closes   | Keeps arithmetic deterministic, testable, compact, and independent from model reasoning.                                       |
 | Quarterly fundamentals  | Extend `get_sec_fundamentals` with a period option | Keeps the agent's tool catalog small while annual and quarterly SEC normalization remain separate internally.                  |
 | Insider transactions    | Semantic ownership tool backed by Massive Form 4   | The model selects meaningful activity types; TypeScript owns raw-code mapping, relevance, summaries, and disclosure semantics. |
+| Agent content contract  | Versioned Zod-validated discriminated union        | Allows Markdown, charts, metrics, and tables to evolve without sending React code through the model.                           |
+| Rich content transport  | Tool artifact side channel in the existing SSE run | Full visualization data reaches React without enlarging the compact tool messages sent to Ollama.                              |
+| Markdown renderer       | `react-markdown` + `remark-gfm`                    | Renders readable model output and GFM tables while leaving raw HTML disabled.                                                  |
 
 ## Architecture
 

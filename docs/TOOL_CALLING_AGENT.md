@@ -83,6 +83,12 @@ Did the model request tools?
 LangGraph's `ToolNode` executes requested tools. The API translates graph updates into SSE events so
 the UI can show which tool was requested and when it completed.
 
+Tools can also collect typed presentation blocks through a side channel that is not added to the
+LangGraph message history. The final `answer.completed` event combines the model's Markdown with
+those blocks in a versioned envelope. This allows full price series, moving-average overlays,
+quarterly revenue bars, and insider tables to reach React without consuming Ollama context. See
+[Rich assistant content](RICH_ASSISTANT_CONTENT.md).
+
 ## Guardrails
 
 - Tools are read-only and have Zod-validated inputs.

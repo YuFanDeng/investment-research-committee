@@ -23,6 +23,8 @@ with local-model fallbacks, Massive market data, and live LangGraph progress in 
 - [x] Add deterministic 2–250-session moving averages with common 5, 10, 20, 50, 100, and 200 defaults.
 - [x] Extend SEC fundamentals with normalized quarterly revenue, QoQ/YoY changes, and transparent Q4 derivation.
 - [x] Add bounded Form 4 insider-transaction research with plan and ownership context.
+- [x] Add versioned rich Agent Chat responses with Markdown, charts, metrics, tables, and safe
+      unknown-block fallbacks.
 - [x] Add formatting, type checking, tests, and production build checks.
 
 ## Next milestones

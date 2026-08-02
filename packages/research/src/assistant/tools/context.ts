@@ -2,6 +2,8 @@ import type { Source } from '../../schemas.js';
 import type { MassiveForm4Client } from '../../tools/massive-form4.js';
 import type { MassiveClient } from '../../tools/massive.js';
 import type { SecEdgarClient } from '../../tools/sec-edgar.js';
+import type { AssistantContentBlock } from '../content-blocks.js';
+import { mergeContentBlock } from '../content-block-builders.js';
 
 export type SecToolClient = Pick<
   SecEdgarClient,
@@ -18,6 +20,7 @@ export type CreateResearchToolContextOptions = {
 
 export function createResearchToolContext(options: CreateResearchToolContextOptions) {
   const sources = new Map<string, Source>();
+  const contentBlocks = new Map<string, AssistantContentBlock>();
   const fundamentalsByTicker = new Map<string, ReturnType<SecToolClient['getFundamentals']>>();
   const quarterlyFundamentalsByTickerAndPeriods = new Map<
     string,
@@ -42,6 +45,9 @@ export function createResearchToolContext(options: CreateResearchToolContextOpti
     ownershipClient: options.ownershipClient,
     collectSource(source: Source) {
       sources.set(source.id, source);
+    },
+    collectContentBlock(block: AssistantContentBlock) {
+      contentBlocks.set(block.id, mergeContentBlock(contentBlocks.get(block.id), block));
     },
     getFundamentals(ticker: string) {
       const normalizedTicker = ticker.toUpperCase();
@@ -92,6 +98,9 @@ export function createResearchToolContext(options: CreateResearchToolContextOpti
     },
     getSources() {
       return [...sources.values()];
+    },
+    getContentBlocks() {
+      return [...contentBlocks.values()];
     },
   };
 }

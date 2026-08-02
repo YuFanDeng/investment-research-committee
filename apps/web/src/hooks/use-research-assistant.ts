@@ -35,7 +35,12 @@ export function useResearchAssistant(secDataMode: SecDataMode) {
     } else if (event.type === 'answer.completed') {
       setMessages((current) => [
         ...current,
-        { role: 'assistant', content: event.answer, sources: event.sources },
+        {
+          role: 'assistant',
+          content: event.answer,
+          presentation: event.presentation,
+          sources: event.sources,
+        },
       ]);
     } else if (event.type === 'assistant.failed') {
       setError(event.message);

@@ -119,6 +119,7 @@ pnpm format:check  # Verify formatting without changing files
 - [Conversational tool-calling agent](docs/TOOL_CALLING_AGENT.md)
 - [Technical analysis tools](docs/TECHNICAL_ANALYSIS.md)
 - [Insider transactions tool](docs/INSIDER_TRANSACTIONS.md)
+- [Rich assistant content](docs/RICH_ASSISTANT_CONTENT.md)
 - [Market-data provider](docs/MARKET_DATA_PROVIDER.md)
 - [Testing strategy](docs/TESTING.md)
 - [System architecture](docs/ARCHITECTURE.md)

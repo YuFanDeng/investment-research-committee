@@ -5,6 +5,7 @@ import { Bot, Check, Database, ExternalLink, LoaderCircle, Send, Sparkles } from
 import { useResearchAssistant } from '../../hooks/use-research-assistant';
 import type { AssistantToolActivity } from '../../types/assistant';
 import type { SecDataMode } from '../../types/research';
+import { AssistantContent } from '../assistant/AssistantContent';
 
 type ResearchAssistantPanelProps = {
   secDataMode: SecDataMode;
@@ -135,7 +136,15 @@ export function ResearchAssistantPanel({ secDataMode }: ResearchAssistantPanelPr
               key={`${message.role}-${index}`}
             >
               <span>{message.role === 'user' ? 'You' : 'Research agent'}</span>
-              <p>{message.content}</p>
+              {message.role === 'assistant' ? (
+                <AssistantContent
+                  fallbackMarkdown={message.content}
+                  presentation={message.presentation}
+                  sources={message.sources ?? []}
+                />
+              ) : (
+                <p>{message.content}</p>
+              )}
               {message.sources?.length ? (
                 <div className="assistant-sources">
                   {message.sources.map((source) => (

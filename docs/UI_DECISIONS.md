@@ -26,6 +26,9 @@ This document records the design decisions for the research workspace redesign.
 | Mode state             | Keep both mode workspaces mounted and visually hide the inactive one        | Preserves committee runs, approval state, chat history, and tool activity when users compare modes.                                      |
 | Agent workspace        | Dedicated introduction, capability summary, and ticker-free chat canvas     | Lets users ask naturally while keeping open-ended research out of the deterministic committee timeline.                                  |
 | Agent company scope    | Show the model-resolved ticker after its first validated tool call          | Makes entity resolution inspectable without requiring a setup form before the conversation.                                              |
+| Agent response format  | Versioned typed blocks plus Markdown narrative                              | Supports charts and domain components without parsing prose or allowing the model to generate React.                                     |
+| Markdown rendering     | `react-markdown` with `remark-gfm`; raw HTML disabled                       | Makes model output readable while keeping untrusted HTML out of the page.                                                                |
+| Rich-result fallback   | Expandable formatted JSON for unknown blocks                                | Preserves forward compatibility when a newer server adds a block the current UI does not recognize.                                      |
 
 ## Component model
 
@@ -51,6 +54,13 @@ ApplicationShell
     └── ResearchAssistantPanel
         ├── ResolvedTicker
         ├── Conversation
+        │   └── AssistantContent
+        │       ├── AgentMarkdown
+        │       ├── AgentMetricGrid
+        │       ├── AgentLineChart
+        │       ├── AgentBarChart
+        │       ├── AgentDataTable
+        │       └── UnknownContentBlock
         ├── ToolActivityTrace
         └── SourceLinks
 ```
@@ -74,6 +84,11 @@ ApplicationShell
 - The Agent Chat composer sends on Enter, preserves multiline input with Shift + Enter, and does
   not intercept Enter while an input method editor is composing text.
 - The active mode uses text, iconography, and `aria-current`; switching modes preserves local state.
+- Insider details show three rows initially and provide an explicit expanded/collapsed control.
+- Rich tables scroll horizontally on narrow screens; metric grids and charts adapt to smaller
+  viewports.
+- Tool-derived visualizations retain source IDs and do not rely on the model to reproduce numeric
+  series.
 
 ## Scope boundary
 

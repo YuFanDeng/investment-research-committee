@@ -9,6 +9,19 @@ export { createResearchModel, getModelSettings } from './model.js';
 export { createResearchAssistantRun, messageContentAsText } from './assistant/agent.js';
 export type { ResearchAssistantRun } from './assistant/agent.js';
 export { AssistantTickerSchema, ResearchAssistantRequestSchema } from './assistant/schemas.js';
+export {
+  ASSISTANT_CONTENT_VERSION,
+  AssistantContentBlockSchema,
+  AssistantContentEnvelopeSchema,
+} from './assistant/content-blocks.js';
+export type {
+  AssistantContentBlock,
+  AssistantContentEnvelope,
+  BarChartContentBlock,
+  DataTableContentBlock,
+  LineChartContentBlock,
+  MetricGridContentBlock,
+} from './assistant/content-blocks.js';
 export type {
   AssistantConversationMessage,
   ResearchAssistantRequest,

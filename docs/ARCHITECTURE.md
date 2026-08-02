@@ -65,7 +65,11 @@ flowchart TB
     OwnershipTools --> Result
     Result -->|ToolMessage| Model
     Model -->|No tool call| Answer[Source-backed answer]
-    Answer -. SSE .-> UI
+    Catalog --> Artifacts[Typed content-block collector]
+    Artifacts --> Envelope[Versioned presentation envelope]
+    Answer --> Envelope
+    Envelope -. SSE .-> Registry[React content registry]
+    Registry --> UI
 ```
 
 ## Demo talking points
@@ -76,6 +80,8 @@ flowchart TB
   conditional routing after a human decision.
 - A separate bounded agent loop chooses read-only tools for focused user questions while the
   committee graph remains deterministic.
+- Rich tool data takes a typed presentation side channel to React, so charts and tables do not
+  consume Ollama's limited context window. The model receives only compact tool summaries.
 - The streaming workflow pauses at a graph boundary. The browser resumes the same run by its
   `thread_id`; it does not restart research or recreate graph state.
 - SEC EDGAR provides filing evidence; Massive provides normalized market and Form 4 ownership

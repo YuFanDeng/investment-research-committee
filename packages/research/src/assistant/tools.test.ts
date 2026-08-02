@@ -139,9 +139,8 @@ describe('research assistant tools', () => {
   });
 
   it('summarizes price history before returning it to the model', async () => {
-    const historyTool = createToolkit().tools.find(
-      (candidate) => candidate.name === 'get_price_history',
-    );
+    const toolkit = createToolkit();
+    const historyTool = toolkit.tools.find((candidate) => candidate.name === 'get_price_history');
 
     const result = JSON.parse(
       String(await historyTool!.invoke({ ticker: 'TEST', days: 30 })),
@@ -150,6 +149,17 @@ describe('research assistant tools', () => {
     expect(result.returnPercent).toBe(20);
     expect(result.observationCount).toBe(2);
     expect(result).not.toHaveProperty('historicalCloses');
+    expect(toolkit.getContentBlocks()).toMatchObject([
+      {
+        type: 'line-chart',
+        id: 'price-history-TEST',
+        series: [{ key: 'close', label: 'Close' }],
+        data: [
+          { date: '2026-07-01', close: 10 },
+          { date: '2026-07-31', close: 12 },
+        ],
+      },
+    ]);
   });
 
   it('rejects an invalid ticker inferred by the model before calling a provider', async () => {
@@ -161,7 +171,8 @@ describe('research assistant tools', () => {
   });
 
   it('returns quarterly revenue through the existing SEC fundamentals tool', async () => {
-    const fundamentalsTool = createToolkit().tools.find(
+    const toolkit = createToolkit();
+    const fundamentalsTool = toolkit.tools.find(
       (candidate) => candidate.name === 'get_sec_fundamentals',
     );
 
@@ -171,6 +182,13 @@ describe('research assistant tools', () => {
 
     expect(result.period).toBe('quarterly');
     expect(result.fundamentals).toHaveLength(8);
+    const revenueBlock = toolkit
+      .getContentBlocks()
+      .find((block) => block.id === 'quarterly-revenue-TEST');
+    expect(revenueBlock).toMatchObject({ type: 'bar-chart' });
+    expect(revenueBlock && 'data' in revenueBlock ? revenueBlock.data : []).toContainEqual(
+      expect.objectContaining({ quarter: '2025 Q1', revenue: 200 }),
+    );
   });
 
   it('reuses cached 365-day history across market and technical tools', async () => {
@@ -203,6 +221,13 @@ describe('research assistant tools', () => {
       ],
     });
     expect(result).not.toHaveProperty('historicalCloses');
+    expect(toolkit.getContentBlocks()).toMatchObject([
+      {
+        type: 'line-chart',
+        id: 'price-history-TEST',
+        series: [{ key: 'close' }, { key: 'ma120' }],
+      },
+    ]);
   });
 
   it('rejects out-of-range or fractional periods before requesting market data', async () => {
@@ -262,6 +287,21 @@ describe('research assistant tools', () => {
     expect(toolkit.getSources().map((source) => source.id)).toEqual([
       'sec-form4-0000000000-26-000001',
     ]);
+    const contentBlocks = toolkit.getContentBlocks();
+    const summaryBlock = contentBlocks.find((block) => block.id === 'insider-summary-TEST');
+    const tableBlock = contentBlocks.find((block) => block.id === 'insider-transactions-TEST');
+    expect(summaryBlock).toMatchObject({ type: 'metric-grid' });
+    expect(summaryBlock && 'metrics' in summaryBlock ? summaryBlock.metrics : []).toContainEqual(
+      expect.objectContaining({ label: 'Transactions', value: 1 }),
+    );
+    expect(tableBlock).toMatchObject({ type: 'data-table' });
+    expect(tableBlock && 'rows' in tableBlock ? tableBlock.rows : []).toContainEqual(
+      expect.objectContaining({
+        insider: 'Test Insider',
+        activity: 'open_market_sale',
+        sourceId: 'sec-form4-0000000000-26-000001',
+      }),
+    );
   });
 
   it('treats all insider activity as an unfiltered provider scan', async () => {

@@ -1,4 +1,6 @@
 import {
+  ASSISTANT_CONTENT_VERSION,
+  AssistantContentEnvelopeSchema,
   AssistantTickerSchema,
   type ResearchAssistantRun,
   type ResearchToolCall,
@@ -101,8 +103,15 @@ export async function streamAssistantRun(options: AssistantStreamOptions) {
   }
 
   if (!finalAnswer) throw new Error('The assistant finished without an answer.');
+  const content = AssistantContentEnvelopeSchema.parse({
+    version: ASSISTANT_CONTENT_VERSION,
+    blocks: [
+      { type: 'markdown', id: 'answer-narrative', content: finalAnswer },
+      ...options.run.getContentBlocks(),
+    ],
+  });
   await options.stream.writeSSE({
     event: 'answer.completed',
-    data: JSON.stringify({ answer: finalAnswer, sources: options.run.getSources() }),
+    data: JSON.stringify({ answer: finalAnswer, content, sources: options.run.getSources() }),
   });
 }

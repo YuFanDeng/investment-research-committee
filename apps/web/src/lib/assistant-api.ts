@@ -1,10 +1,24 @@
-import type { AssistantEvent, AssistantRequest } from '../types/assistant';
+import type { AssistantEvent, AssistantPresentation, AssistantRequest } from '../types/assistant';
 import type { Source } from '../types/research';
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8787';
 
 function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
+}
+
+function asPresentation(value: unknown, answer: string): AssistantPresentation {
+  if (typeof value === 'object' && value !== null) {
+    const candidate = value as Record<string, unknown>;
+    if (typeof candidate.version === 'number' && Array.isArray(candidate.blocks)) {
+      return { version: candidate.version, blocks: candidate.blocks };
+    }
+  }
+
+  return {
+    version: 1,
+    blocks: [{ type: 'markdown', id: 'answer-narrative', content: answer }],
+  };
 }
 
 export async function streamAssistantQuestion(
@@ -69,6 +83,7 @@ export async function streamAssistantQuestion(
       onEvent({
         type: 'answer.completed',
         answer: payload.answer,
+        presentation: asPresentation(payload.content, payload.answer),
         sources: asArray<Source>(payload.sources),
       });
     } else if (eventName === 'assistant.failed') {

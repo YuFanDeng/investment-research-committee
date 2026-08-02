@@ -2,6 +2,7 @@ import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 
 import type { PriceHistoryResult } from '../../tools/massive.js';
+import { createPriceHistoryBlock } from '../content-block-builders.js';
 import { AssistantTickerSchema } from '../schemas.js';
 import type { ResearchToolContext } from './context.js';
 
@@ -68,6 +69,9 @@ export function createMarketResearchTools(context: ResearchToolContext) {
     async ({ ticker, days }) => {
       const result = await context.getPriceHistory(ticker, days);
       context.collectSource(result.source);
+      context.collectContentBlock(
+        createPriceHistoryBlock(ticker, result.historicalCloses, result.source.id),
+      );
       return JSON.stringify(summarizePriceHistory(result));
     },
     {

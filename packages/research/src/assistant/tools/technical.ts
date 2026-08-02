@@ -6,6 +6,7 @@ import {
   MAX_MOVING_AVERAGE_PERIOD,
   MIN_MOVING_AVERAGE_PERIOD,
 } from '../../technical/moving-average.js';
+import { createMovingAverageBlock } from '../content-block-builders.js';
 import { AssistantTickerSchema } from '../schemas.js';
 import type { ResearchToolContext } from './context.js';
 
@@ -21,6 +22,9 @@ export function createTechnicalResearchTools(context: ResearchToolContext) {
       const result = await context.getPriceHistory(ticker, 365);
       context.collectSource(result.source);
       const analysis = calculateSimpleMovingAverages(result.historicalCloses, periods);
+      context.collectContentBlock(
+        createMovingAverageBlock(ticker, result.historicalCloses, periods, result.source.id),
+      );
 
       return JSON.stringify({
         ticker,

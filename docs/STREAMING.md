@@ -88,6 +88,11 @@ tool.requested / tool.completed (zero to four times)
 answer.completed
 ```
 
+Agent Chat's `answer.completed` payload contains the legacy `answer` string, collected `sources`,
+and a versioned `content` envelope. Keeping `answer` preserves conversation-history and older-client
+compatibility; the current UI renders the typed blocks. Unknown block types fall back to formatted
+JSON instead of failing the entire response.
+
 The API derives these events from LangGraph agent and `ToolNode` updates. `ticker.resolved` exposes
 the validated ticker argument selected by the model before the corresponding tool activity. Raw
 model messages and full tool payloads remain server-side; the browser receives the resolved ticker,

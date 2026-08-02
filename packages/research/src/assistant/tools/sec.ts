@@ -2,6 +2,7 @@ import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 
 import type { RecentSecFilings } from '../../tools/sec-edgar.js';
+import { createQuarterlyRevenueBlock } from '../content-block-builders.js';
 import { AssistantTickerSchema } from '../schemas.js';
 import type { ResearchToolContext } from './context.js';
 
@@ -9,10 +10,22 @@ export function createSecResearchTools(context: ResearchToolContext) {
   const getSecFundamentals = tool(
     async ({ ticker, period, periods }) => {
       const requestedPeriods = periods ?? 8;
-      const result =
-        period === 'quarterly'
-          ? await context.getQuarterlyFundamentals(ticker, requestedPeriods)
-          : await context.getFundamentals(ticker);
+      if (period === 'quarterly') {
+        const result = await context.getQuarterlyFundamentals(ticker, requestedPeriods);
+        context.collectSource(result.source);
+        context.collectContentBlock(
+          createQuarterlyRevenueBlock(ticker, result.fundamentals, result.source.id),
+        );
+        return JSON.stringify({
+          ticker,
+          companyName: result.companyName,
+          period,
+          fundamentals: result.fundamentals,
+          sourceIds: [result.source.id],
+        });
+      }
+
+      const result = await context.getFundamentals(ticker);
       context.collectSource(result.source);
       return JSON.stringify({
         ticker,
