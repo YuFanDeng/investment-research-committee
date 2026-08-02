@@ -1,7 +1,37 @@
 import type { Form4TransactionCode, InsiderTransaction } from '../../tools/massive-form4.js';
 
+export const INSIDER_ACTIVITY_TYPES = [
+  'all',
+  'open_market_purchases',
+  'open_market_sales',
+  'compensation',
+  'derivatives',
+  'gifts_and_transfers',
+  'other',
+] as const;
+
+export type InsiderActivityType = (typeof INSIDER_ACTIVITY_TYPES)[number];
+
+const TRANSACTION_CODES_BY_ACTIVITY = {
+  open_market_purchases: ['P'],
+  open_market_sales: ['S'],
+  compensation: ['A', 'F', 'I', 'M'],
+  derivatives: ['C', 'E', 'H', 'K', 'O', 'X'],
+  gifts_and_transfers: ['G', 'W', 'Z'],
+  other: ['D', 'J', 'L', 'U', 'V'],
+} as const satisfies Record<Exclude<InsiderActivityType, 'all'>, readonly Form4TransactionCode[]>;
+
+const RELEVANCE_BY_ACTIVITY: Record<Exclude<InsiderActivityType, 'all'>, number> = {
+  open_market_purchases: 0,
+  open_market_sales: 0,
+  compensation: 1,
+  gifts_and_transfers: 2,
+  derivatives: 3,
+  other: 4,
+};
+
 export type OwnershipFilters = {
-  transactionCodes?: Form4TransactionCode[];
+  activityTypes: InsiderActivityType[];
   ownershipType: 'all' | 'direct' | 'indirect' | 'not_disclosed';
   planStatus: 'all' | InsiderTransaction['planStatus'];
   securityType: 'all' | 'derivative' | 'non-derivative';
@@ -12,6 +42,28 @@ export type OwnershipSort = {
   sortBy: 'filing_date' | 'transaction_date' | 'transaction_value';
   sortOrder: 'asc' | 'desc';
 };
+
+export type OwnershipDetailSelection = OwnershipSort & {
+  detailStrategy: 'most_relevant' | 'requested_sort';
+};
+
+export function activityTypeForTransactionCode(code?: string): Exclude<InsiderActivityType, 'all'> {
+  for (const [activityType, codes] of Object.entries(TRANSACTION_CODES_BY_ACTIVITY)) {
+    if ((codes as readonly string[]).includes(code ?? '')) {
+      return activityType as Exclude<InsiderActivityType, 'all'>;
+    }
+  }
+  return 'other';
+}
+
+export function transactionCodesForActivities(activityTypes: InsiderActivityType[]) {
+  if (activityTypes.includes('all')) return undefined;
+
+  return activityTypes.flatMap(
+    (activityType) =>
+      TRANSACTION_CODES_BY_ACTIVITY[activityType as Exclude<InsiderActivityType, 'all'>],
+  );
+}
 
 export function transactionCategory(code?: string) {
   const categories: Record<string, string> = {
@@ -29,10 +81,11 @@ export function matchesOwnershipFilters(
   transaction: InsiderTransaction,
   filters: OwnershipFilters,
 ) {
+  const requestedTransactionCodes = transactionCodesForActivities(filters.activityTypes);
   if (
-    filters.transactionCodes?.length &&
+    requestedTransactionCodes &&
     (!transaction.transactionCode ||
-      !filters.transactionCodes.includes(transaction.transactionCode as Form4TransactionCode))
+      !requestedTransactionCodes.includes(transaction.transactionCode as Form4TransactionCode))
   ) {
     return false;
   }
@@ -50,6 +103,21 @@ export function matchesOwnershipFilters(
     return false;
   }
   return transaction.recordType === undefined || transaction.recordType === 'transaction';
+}
+
+export function compareInsiderTransactionDetails(
+  left: InsiderTransaction,
+  right: InsiderTransaction,
+  selection: OwnershipDetailSelection,
+) {
+  if (selection.detailStrategy === 'most_relevant') {
+    const relevanceComparison =
+      RELEVANCE_BY_ACTIVITY[activityTypeForTransactionCode(left.transactionCode)] -
+      RELEVANCE_BY_ACTIVITY[activityTypeForTransactionCode(right.transactionCode)];
+    if (relevanceComparison !== 0) return relevanceComparison;
+  }
+
+  return compareInsiderTransactions(left, right, selection);
 }
 
 export function compareInsiderTransactions(

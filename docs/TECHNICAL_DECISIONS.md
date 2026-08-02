@@ -4,30 +4,30 @@ This document records the initial implementation choices for the Investment Rese
 
 ## Locked-in stack
 
-| Area                    | Decision                                           | Why                                                                                                                  |
-| ----------------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Frontend                | React + TypeScript                                 | Matches the team's frontend strengths and supports a polished, interactive research dashboard.                       |
-| Build tooling           | Vite                                               | Fast local development and a lightweight SPA setup. Server-side rendering is not required for the initial dashboard. |
-| API server              | Hono + TypeScript                                  | A small HTTP layer for starting and resuming research runs, streaming progress, and protecting API keys.             |
-| Agent orchestration     | LangGraph.js                                       | Keeps the workflow, graph state, conditional routing, critique, and later human approval in TypeScript.              |
-| Runtime validation      | Zod                                                | Validates untrusted runtime data and infers TypeScript types from the same schemas.                                  |
-| Primary evidence source | SEC EDGAR                                          | Provides authoritative U.S. company filing and financial data.                                                       |
-| Market data provider    | Massive                                            | Documented TypeScript-friendly API with a free end-of-day tier suitable for the valuation analyst demo.              |
-| Code formatting         | Prettier                                           | Keeps source files consistently readable and reduces formatting noise in reviews.                                    |
-| Progress transport      | Server-Sent Events                                 | Streams one LangGraph run to the React UI without making the browser orchestrate internal agents.                    |
-| Partial-result delivery | Typed SSE artifact events                          | Reveals SEC, market, analyst, and skeptic results as nodes finish while preserving one authoritative final response. |
-| UI icons                | lucide-react                                       | Provides a consistent, lightweight icon vocabulary for workflow, evidence, and market states.                        |
-| Price chart             | Recharts                                           | Renders the historical closes already returned by Massive without introducing a second charting abstraction.         |
-| UI component strategy   | Domain components + CSS tokens                     | Keeps the dashboard visually distinctive and makes the frontend architecture easy to understand and maintain.        |
-| Ollama context window   | Configurable via `OLLAMA_NUM_CTX`, default `4096`  | Keeps local development compatible with the current model while allowing larger-context models later.                |
-| Human review            | LangGraph interrupt after skeptic challenge        | Demonstrates checkpointed pause/resume, explicit user control, and conditional graph routing before publication.     |
-| Demo checkpointing      | LangGraph `MemorySaver`                            | Preserves paused runs by `thread_id` without adding a database; durable persistence remains a later production step. |
-| Conversational agent    | Bounded LangGraph `ToolNode` loop                  | Lets the model select read-only research functions while preserving explicit limits and visible execution.           |
-| Tool result strategy    | Compact structured JSON with source IDs            | Keeps tool evidence auditable and protects the local model's 4,096-token context window.                             |
-| Tool organization       | Domain category modules plus a shared catalog      | Keeps SEC, market, valuation, and future tool families independently readable and testable.                          |
-| Technical indicators    | Pure TypeScript calculations over Massive closes   | Keeps arithmetic deterministic, testable, compact, and independent from model reasoning.                             |
-| Quarterly fundamentals  | Extend `get_sec_fundamentals` with a period option | Keeps the agent's tool catalog small while annual and quarterly SEC normalization remain separate internally.        |
-| Insider transactions    | Dedicated ownership tool backed by Massive Form 4  | Exposes rich ownership filters while keeping classification, summaries, and disclosure semantics deterministic.      |
+| Area                    | Decision                                           | Why                                                                                                                            |
+| ----------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Frontend                | React + TypeScript                                 | Matches the team's frontend strengths and supports a polished, interactive research dashboard.                                 |
+| Build tooling           | Vite                                               | Fast local development and a lightweight SPA setup. Server-side rendering is not required for the initial dashboard.           |
+| API server              | Hono + TypeScript                                  | A small HTTP layer for starting and resuming research runs, streaming progress, and protecting API keys.                       |
+| Agent orchestration     | LangGraph.js                                       | Keeps the workflow, graph state, conditional routing, critique, and later human approval in TypeScript.                        |
+| Runtime validation      | Zod                                                | Validates untrusted runtime data and infers TypeScript types from the same schemas.                                            |
+| Primary evidence source | SEC EDGAR                                          | Provides authoritative U.S. company filing and financial data.                                                                 |
+| Market data provider    | Massive                                            | Documented TypeScript-friendly API with a free end-of-day tier suitable for the valuation analyst demo.                        |
+| Code formatting         | Prettier                                           | Keeps source files consistently readable and reduces formatting noise in reviews.                                              |
+| Progress transport      | Server-Sent Events                                 | Streams one LangGraph run to the React UI without making the browser orchestrate internal agents.                              |
+| Partial-result delivery | Typed SSE artifact events                          | Reveals SEC, market, analyst, and skeptic results as nodes finish while preserving one authoritative final response.           |
+| UI icons                | lucide-react                                       | Provides a consistent, lightweight icon vocabulary for workflow, evidence, and market states.                                  |
+| Price chart             | Recharts                                           | Renders the historical closes already returned by Massive without introducing a second charting abstraction.                   |
+| UI component strategy   | Domain components + CSS tokens                     | Keeps the dashboard visually distinctive and makes the frontend architecture easy to understand and maintain.                  |
+| Ollama context window   | Configurable via `OLLAMA_NUM_CTX`, default `4096`  | Keeps local development compatible with the current model while allowing larger-context models later.                          |
+| Human review            | LangGraph interrupt after skeptic challenge        | Demonstrates checkpointed pause/resume, explicit user control, and conditional graph routing before publication.               |
+| Demo checkpointing      | LangGraph `MemorySaver`                            | Preserves paused runs by `thread_id` without adding a database; durable persistence remains a later production step.           |
+| Conversational agent    | Bounded LangGraph `ToolNode` loop                  | Lets the model select read-only research functions while preserving explicit limits and visible execution.                     |
+| Tool result strategy    | Compact structured JSON with source IDs            | Keeps tool evidence auditable and protects the local model's 4,096-token context window.                                       |
+| Tool organization       | Domain category modules plus a shared catalog      | Keeps SEC, market, valuation, and future tool families independently readable and testable.                                    |
+| Technical indicators    | Pure TypeScript calculations over Massive closes   | Keeps arithmetic deterministic, testable, compact, and independent from model reasoning.                                       |
+| Quarterly fundamentals  | Extend `get_sec_fundamentals` with a period option | Keeps the agent's tool catalog small while annual and quarterly SEC normalization remain separate internally.                  |
+| Insider transactions    | Semantic ownership tool backed by Massive Form 4   | The model selects meaningful activity types; TypeScript owns raw-code mapping, relevance, summaries, and disclosure semantics. |
 
 ## Architecture
 

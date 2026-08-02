@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import type { MassiveForm4Query } from '../tools/massive-form4.js';
 import { createResearchTools } from './tools/catalog.js';
 
 const secSource = {
@@ -18,7 +19,10 @@ const marketSource = {
   retrievedAt: '2026-07-31T00:00:00.000Z',
 };
 
-function createToolkit(onPriceHistoryRequest: () => void = () => undefined) {
+function createToolkit(
+  onPriceHistoryRequest: () => void = () => undefined,
+  onOwnershipRequest: (query: MassiveForm4Query) => void = () => undefined,
+) {
   return createResearchTools({
     secClient: {
       getFundamentals: async () => ({
@@ -73,43 +77,46 @@ function createToolkit(onPriceHistoryRequest: () => void = () => undefined) {
       },
     },
     ownershipClient: {
-      getTransactions: async () => ({
-        transactions: [
-          {
-            accessionNumber: '0000000000-26-000001',
-            filingDate: '2026-07-15',
-            filingUrl: 'https://www.sec.gov/test-form-4',
-            formType: '4',
-            issuerName: 'Test Company',
-            tickers: ['TEST'],
-            ownerCik: '0000000001',
-            ownerName: 'Test Insider',
-            officerTitle: 'Chief Executive Officer',
-            roles: ['officer' as const],
-            transactionDate: '2026-07-14',
-            transactionCode: 'S',
-            acquiredOrDisposed: 'disposed' as const,
-            shares: 100,
-            pricePerShare: 20,
-            value: 2_000,
-            planStatus: 'reported_10b5_1' as const,
-            ownershipType: 'indirect' as const,
-            natureOfOwnership: 'By Trust',
-            filingTimeliness: 'on_time' as const,
-            footnotes: [],
-            recordType: 'transaction',
-          },
-        ],
-        sources: [
-          {
-            id: 'sec-form4-0000000000-26-000001',
-            title: 'Test Company — Form 4',
-            url: 'https://www.sec.gov/test-form-4',
-            sourceType: 'sec_filing' as const,
-            retrievedAt: '2026-07-31T00:00:00.000Z',
-          },
-        ],
-      }),
+      getTransactions: async (query) => {
+        onOwnershipRequest(query);
+        return {
+          transactions: [
+            {
+              accessionNumber: '0000000000-26-000001',
+              filingDate: '2026-07-15',
+              filingUrl: 'https://www.sec.gov/test-form-4',
+              formType: '4',
+              issuerName: 'Test Company',
+              tickers: ['TEST'],
+              ownerCik: '0000000001',
+              ownerName: 'Test Insider',
+              officerTitle: 'Chief Executive Officer',
+              roles: ['officer' as const],
+              transactionDate: '2026-07-14',
+              transactionCode: 'S',
+              acquiredOrDisposed: 'disposed' as const,
+              shares: 100,
+              pricePerShare: 20,
+              value: 2_000,
+              planStatus: 'reported_10b5_1' as const,
+              ownershipType: 'indirect' as const,
+              natureOfOwnership: 'By Trust',
+              filingTimeliness: 'on_time' as const,
+              footnotes: [],
+              recordType: 'transaction',
+            },
+          ],
+          sources: [
+            {
+              id: 'sec-form4-0000000000-26-000001',
+              title: 'Test Company — Form 4',
+              url: 'https://www.sec.gov/test-form-4',
+              sourceType: 'sec_filing' as const,
+              retrievedAt: '2026-07-31T00:00:00.000Z',
+            },
+          ],
+        };
+      },
     },
   });
 }
@@ -255,5 +262,39 @@ describe('research assistant tools', () => {
     expect(toolkit.getSources().map((source) => source.id)).toEqual([
       'sec-form4-0000000000-26-000001',
     ]);
+  });
+
+  it('treats all insider activity as an unfiltered provider scan', async () => {
+    let providerQuery: MassiveForm4Query | undefined;
+    const insiderTool = createToolkit(undefined, (query) => {
+      providerQuery = query;
+    }).tools.find((candidate) => candidate.name === 'get_insider_transactions');
+
+    const result = JSON.parse(
+      String(
+        await insiderTool!.invoke({
+          ticker: 'TEST',
+          lookbackDays: 730,
+          activityTypes: ['all'],
+        }),
+      ),
+    ) as { query: { activityTypes: string[] }; summaryScope: string };
+
+    expect(providerQuery?.transactionCode).toBeUndefined();
+    expect(result.query.activityTypes).toEqual(['all']);
+    expect(result.summaryScope).toBe('all_matched_transactions_in_bounded_scan');
+  });
+
+  it('rejects combining all activity with narrower insider categories', async () => {
+    const insiderTool = createToolkit().tools.find(
+      (candidate) => candidate.name === 'get_insider_transactions',
+    );
+
+    await expect(
+      insiderTool!.invoke({
+        ticker: 'TEST',
+        activityTypes: ['all', 'open_market_sales'],
+      }),
+    ).rejects.toThrow('Use "all" by itself');
   });
 });

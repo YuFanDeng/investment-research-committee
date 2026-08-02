@@ -40,10 +40,12 @@ three-month values from cumulative 10-Q facts, removes later comparative duplica
 QoQ and YoY changes, and derives Q4 as annual revenue minus the reported nine-month total when the
 10-K does not publish a standalone fourth quarter. Every derived quarter is labeled in the result.
 
-`get_insider_transactions` accepts bounded date, filing, transaction-code, owner, ownership,
-Rule 10b5-1, security, role, and sorting controls. Massive's complete Form 4 response is normalized
-into three-state disclosures and compact transaction records before it reaches the model. See
-[Insider transactions tool](INSIDER_TRANSACTIONS.md).
+`get_insider_transactions` accepts bounded date, filing, semantic activity, owner, ownership, Rule
+10b5-1, security, role, and sorting controls. The model chooses concepts such as open-market sales
+or compensation rather than raw Form 4 letters; TypeScript maps those concepts to codes. An `all`
+request remains unfiltered, and a relevance strategy keeps open-market activity visible in bounded
+details. Massive's Form 4 response is normalized into three-state disclosures and compact records
+before it reaches the model. See [Insider transactions tool](INSIDER_TRANSACTIONS.md).
 
 ## Tool organization
 

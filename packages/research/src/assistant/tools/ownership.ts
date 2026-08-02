@@ -1,14 +1,15 @@
 import { tool } from '@langchain/core/tools';
 import { z } from 'zod';
 
-import { FORM4_TRANSACTION_CODES } from '../../tools/massive-form4.js';
 import { AssistantTickerSchema } from '../schemas.js';
 import type { ResearchToolContext } from './context.js';
 import {
+  INSIDER_ACTIVITY_TYPES,
   compactInsiderTransaction,
-  compareInsiderTransactions,
+  compareInsiderTransactionDetails,
   matchesOwnershipFilters,
   summarizeInsiderTransactions,
+  transactionCodesForActivities,
 } from './ownership-analysis.js';
 
 const MAX_PROVIDER_RECORDS = 250;
@@ -36,7 +37,7 @@ export function createOwnershipResearchTools(context: ResearchToolContext) {
       lookbackDays,
       filingDateFrom,
       filingDateTo,
-      transactionCodes,
+      activityTypes,
       formType,
       ownershipType,
       planStatus,
@@ -44,12 +45,14 @@ export function createOwnershipResearchTools(context: ResearchToolContext) {
       insiderRoles,
       sortBy,
       sortOrder,
+      detailStrategy,
       limit,
     }) => {
       const effectiveDateTo = filingDateTo ?? isoDate(new Date());
       const effectiveDateFrom = filingDateFrom ?? dateDaysBefore(effectiveDateTo, lookbackDays);
+      const requestedTransactionCodes = transactionCodesForActivities(activityTypes);
       const providerTransactionCode =
-        transactionCodes?.length === 1 ? transactionCodes[0] : undefined;
+        requestedTransactionCodes?.length === 1 ? requestedTransactionCodes[0] : undefined;
       // The beta endpoint currently accepts filing_date for server-side sorting. Other supported
       // presentation orders are applied deterministically after retrieving the latest records.
       const providerSort = sortBy === 'filing_date' ? `${sortBy}.${sortOrder}` : 'filing_date.desc';
@@ -68,14 +71,20 @@ export function createOwnershipResearchTools(context: ResearchToolContext) {
       const filteredTransactions = result.transactions
         .filter((transaction) =>
           matchesOwnershipFilters(transaction, {
-            transactionCodes,
+            activityTypes,
             ownershipType,
             planStatus,
             securityType,
             insiderRoles,
           }),
         )
-        .sort((left, right) => compareInsiderTransactions(left, right, { sortBy, sortOrder }));
+        .sort((left, right) =>
+          compareInsiderTransactionDetails(left, right, {
+            sortBy,
+            sortOrder,
+            detailStrategy,
+          }),
+        );
       const returnedTransactions = filteredTransactions.slice(0, limit);
       const returnedAccessions = new Set(
         returnedTransactions
@@ -95,7 +104,7 @@ export function createOwnershipResearchTools(context: ResearchToolContext) {
           ownerCik,
           filingDateFrom: effectiveDateFrom,
           filingDateTo: effectiveDateTo,
-          transactionCodes,
+          activityTypes,
           formType,
           ownershipType,
           planStatus,
@@ -103,13 +112,18 @@ export function createOwnershipResearchTools(context: ResearchToolContext) {
           insiderRoles,
           sortBy,
           sortOrder,
+          detailStrategy,
           limit,
         },
         recordsScanned: result.transactions.length,
         matchedTransactionCount: filteredTransactions.length,
         providerResultTruncated: Boolean(result.nextUrl),
-        summaryScope: 'returned_transactions',
-        summary: summarizeInsiderTransactions(returnedTransactions),
+        summaryScope: 'all_matched_transactions_in_bounded_scan',
+        summary: summarizeInsiderTransactions(filteredTransactions),
+        detailScope:
+          filteredTransactions.length > returnedTransactions.length
+            ? 'representative_bounded_selection'
+            : 'all_matched_transactions',
         transactions: returnedTransactions.map((transaction) =>
           compactInsiderTransaction(transaction, returnedSourceIds),
         ),
@@ -125,7 +139,7 @@ export function createOwnershipResearchTools(context: ResearchToolContext) {
     {
       name: 'get_insider_transactions',
       description:
-        'Research SEC Form 4 insider transactions for a company. Supports filing-date windows, transaction codes, amendments, a reporting-owner CIK, direct or indirect ownership, Rule 10b5-1 status, derivative or non-derivative securities, insider roles, value/date sorting, and bounded results. Use this for insider purchases, sales, grants, exercises, gifts, ownership method, or planned-trade questions.',
+        'Research SEC Form 4 insider transactions for a company. Select meaningful activity types rather than raw SEC codes. Use activityTypes=["all"] when the user asks for all activity; do not enumerate categories. Supports filing-date windows, amendments, a reporting-owner CIK, direct or indirect ownership, Rule 10b5-1 status, derivative or non-derivative securities, insider roles, value/date sorting, and bounded details. Use this for insider purchases, sales, grants, exercises, gifts, ownership method, or planned-trade questions.',
       schema: z
         .object({
           ticker: AssistantTickerSchema,
@@ -134,7 +148,7 @@ export function createOwnershipResearchTools(context: ResearchToolContext) {
           lookbackDays: z.number().int().min(1).max(730).default(90),
           filingDateFrom: IsoDateSchema.optional(),
           filingDateTo: IsoDateSchema.optional(),
-          transactionCodes: z.array(z.enum(FORM4_TRANSACTION_CODES)).min(1).max(8).optional(),
+          activityTypes: z.array(z.enum(INSIDER_ACTIVITY_TYPES)).min(1).max(6).default(['all']),
           formType: z.enum(['original', 'amendment', 'both']).default('original'),
           ownershipType: z.enum(['all', 'direct', 'indirect', 'not_disclosed']).default('all'),
           planStatus: z
@@ -150,9 +164,17 @@ export function createOwnershipResearchTools(context: ResearchToolContext) {
             .enum(['filing_date', 'transaction_date', 'transaction_value'])
             .default('transaction_date'),
           sortOrder: z.enum(['asc', 'desc']).default('desc'),
+          detailStrategy: z.enum(['most_relevant', 'requested_sort']).default('most_relevant'),
           limit: z.number().int().min(1).max(12).default(DEFAULT_RESULT_LIMIT),
         })
         .superRefine((value, context) => {
+          if (value.activityTypes.includes('all') && value.activityTypes.length > 1) {
+            context.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ['activityTypes'],
+              message: 'Use "all" by itself, or select one or more specific activity types.',
+            });
+          }
           if (
             value.filingDateFrom &&
             value.filingDateTo &&
