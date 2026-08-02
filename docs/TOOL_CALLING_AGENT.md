@@ -93,7 +93,9 @@ quarterly revenue bars, and insider tables to reach React without consuming Olla
 
 - Tools are read-only and have Zod-validated inputs.
 - Tickers inferred by the model are normalized and validated at every tool boundary.
-- Conversation history is limited to six messages.
+- Conversation history transport is limited to six messages and 20,000 characters per message.
+  Before model invocation, TypeScript compacts each message to at most 2,000 characters and the
+  complete history to 4,000 characters, prioritizing recent context.
 - Questions are limited to 1,000 characters.
 - One run can execute at most four tool calls.
 - Price ranges are restricted to 30, 90, or 365 days.

@@ -37,4 +37,13 @@ describe('research schemas', () => {
     expect(result).not.toHaveProperty('ticker');
     expect(result.history).toHaveLength(1);
   });
+
+  it('accepts a long prior model answer for later context compaction', () => {
+    const result = ResearchAssistantRequestSchema.parse({
+      question: 'How does that compare with last year?',
+      history: [{ role: 'assistant', content: 'Detailed evidence. '.repeat(300) }],
+    });
+
+    expect(result.history[0].content.length).toBeGreaterThan(2_000);
+  });
 });

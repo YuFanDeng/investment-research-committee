@@ -24,7 +24,7 @@ const TOOL_LABELS: Record<string, string> = {
 const LIVE_SUGGESTED_QUESTIONS = [
   'Is Apple above its 200-day moving average?',
   "What do Microsoft's latest fundamentals say?",
-  'Were recent GNRC insider sales reported under 10b5-1 plans?',
+  'Were recent Apple insider sales reported under 10b5-1 plans?',
   'What valuation limitations should I consider for Nvidia?',
 ];
 

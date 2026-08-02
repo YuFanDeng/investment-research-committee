@@ -1,8 +1,12 @@
 import { z } from 'zod';
 
+export const MAX_HISTORY_INPUT_CHARACTERS = 20_000;
+
 export const AssistantConversationMessageSchema = z.object({
   role: z.enum(['user', 'assistant']),
-  content: z.string().trim().min(1).max(2_000),
+  // A model answer can be longer than the compact context we later send back to Ollama. Accept a
+  // bounded transport value here; the history compactor applies the smaller model-context budget.
+  content: z.string().trim().min(1).max(MAX_HISTORY_INPUT_CHARACTERS),
 });
 
 export const AssistantTickerSchema = z

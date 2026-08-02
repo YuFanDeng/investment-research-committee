@@ -29,6 +29,10 @@ three-state plan and ownership disclosures, source creation, and missing-field b
 tool tests verify semantic filtering, deterministic summaries, compact execution context, and source
 collection without calling Massive or Ollama.
 
+Conversation-history tests verify that long model answers are accepted at the API boundary, then
+compacted to per-message and total character budgets before the next Ollama invocation. Compaction
+preserves the beginning and conclusion of a long answer and prioritizes recent messages.
+
 ## Fixture
 
 The fixture is the raw SEC Company Facts response captured for Apple:

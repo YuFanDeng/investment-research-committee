@@ -12,6 +12,7 @@ import { createResearchModel, getModelSettings } from '../model.js';
 import type { MassiveClient } from '../tools/massive.js';
 import type { MassiveForm4Client } from '../tools/massive-form4.js';
 import type { SecEdgarClient } from '../tools/sec-edgar.js';
+import { compactConversationHistory } from './history.js';
 import type { ResearchAssistantRequest } from './schemas.js';
 import { createResearchTools } from './tools/catalog.js';
 
@@ -34,7 +35,7 @@ For a company-specific question, infer the most likely U.S. ticker from the comp
 }
 
 function conversationMessages(request: ResearchAssistantRequest): BaseMessage[] {
-  const history = request.history.map((message) =>
+  const history = compactConversationHistory(request.history).map((message) =>
     message.role === 'user' ? new HumanMessage(message.content) : new AIMessage(message.content),
   );
   return [...history, new HumanMessage(request.question)];

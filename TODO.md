@@ -25,6 +25,7 @@ with local-model fallbacks, Massive market data, and live LangGraph progress in 
 - [x] Add bounded Form 4 insider-transaction research with plan and ownership context.
 - [x] Add versioned rich Agent Chat responses with Markdown, charts, metrics, tables, and safe
       unknown-block fallbacks.
+- [x] Add a repeatable product prompt guide covering both research modes and major capabilities.
 - [x] Add formatting, type checking, tests, and production build checks.
 
 ## Next milestones

@@ -33,7 +33,7 @@ the agent contract.
 
 ```ts
 get_insider_transactions({
-  ticker: 'GNRC',
+  ticker: 'AAPL',
   lookbackDays: 90,
   activityTypes: ['open_market_purchases', 'open_market_sales'],
   formType: 'original',
