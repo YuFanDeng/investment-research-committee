@@ -19,6 +19,16 @@ another developer.
 - Run `pnpm format:check` and the relevant type checks before handoff when dependencies are available.
 - Do not manually reformat unrelated files; let Prettier handle formatting.
 
+## Git handoff for substantial features
+
+- After completing and verifying a substantial feature, create a focused commit and push the
+  current branch automatically.
+- Treat new user-facing capabilities, workflow changes, provider integrations, and meaningful
+  architecture work as substantial features. Small fixes and documentation-only edits can remain
+  uncommitted unless the user asks for a push.
+- Never push partial or failing work, include unrelated user changes, force-push, or rewrite shared
+  history.
+
 ## Current architecture
 
 - `apps/web`: React + Vite dashboard.

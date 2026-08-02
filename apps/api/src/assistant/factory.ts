@@ -1,6 +1,7 @@
 import {
   createResearchAssistantRun,
   FixtureSecEdgarClient,
+  MassiveForm4Client,
   MassiveClient,
   SecEdgarClient,
   type ResearchAssistantRequest,
@@ -26,6 +27,13 @@ export function createAssistantFactory(options: CreateAssistantFactoryOptions) {
       }).getPriceHistory(ticker, days);
     },
   };
+  const ownershipClient = {
+    getTransactions(query: Parameters<MassiveForm4Client['getTransactions']>[0]) {
+      return new MassiveForm4Client({
+        apiKey: options.modelEnvironment.MASSIVE_API_KEY,
+      }).getTransactions(query);
+    },
+  };
 
   return {
     createRun(request: ResearchAssistantRequest) {
@@ -34,6 +42,7 @@ export function createAssistantFactory(options: CreateAssistantFactoryOptions) {
         modelEnvironment: options.modelEnvironment,
         secClient: request.secDataMode === 'fixture' ? fixtureSecClient : liveSecClient,
         marketClient,
+        ownershipClient,
       });
     },
   };

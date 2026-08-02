@@ -51,15 +51,18 @@ flowchart TB
     Catalog --> MarketTools[Market snapshot and history]
     Catalog --> ValuationTools[Valuation metrics]
     Catalog --> TechnicalTools[Moving averages]
+    Catalog --> OwnershipTools[Form 4 insider transactions]
     SEC[(SEC EDGAR)] --> SECtools
     Massive[(Massive market data)] --> MarketTools
     SEC --> ValuationTools
     Massive --> ValuationTools
     Massive --> TechnicalTools
+    Massive --> OwnershipTools
     SECtools --> Result[Compact sourced result]
     MarketTools --> Result
     ValuationTools --> Result
     TechnicalTools --> Result
+    OwnershipTools --> Result
     Result -->|ToolMessage| Model
     Model -->|No tool call| Answer[Source-backed answer]
     Answer -. SSE .-> UI
@@ -75,6 +78,7 @@ flowchart TB
   committee graph remains deterministic.
 - The streaming workflow pauses at a graph boundary. The browser resumes the same run by its
   `thread_id`; it does not restart research or recreate graph state.
-- SEC EDGAR provides filing evidence and Massive provides normalized market context.
+- SEC EDGAR provides filing evidence; Massive provides normalized market and Form 4 ownership
+  context with direct links back to the original SEC filings.
 - Ollama is replaceable because model invocation is isolated behind typed graph dependencies.
 - Deterministic fallbacks keep the demo inspectable when a local model or provider is unavailable.

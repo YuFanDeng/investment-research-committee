@@ -69,6 +69,8 @@ ApplicationShell
 - Fixture/live SEC mode remains available only in development and is visually secondary to the conversation.
 - Conversational tool calls show readable names, validated arguments, and completion state without
   exposing raw tool payloads.
+- Insider-transaction requests use a readable tool label while plan, ownership, and filing filters
+  remain visible in the existing argument trace.
 - The Agent Chat composer sends on Enter, preserves multiline input with Shift + Enter, and does
   not intercept Enter while an input method editor is composing text.
 - The active mode uses text, iconography, and `aria-current`; switching modes preserves local state.

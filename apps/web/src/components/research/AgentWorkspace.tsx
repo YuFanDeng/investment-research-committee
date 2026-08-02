@@ -10,7 +10,7 @@ type AgentWorkspaceProps = {
 };
 
 const CAPABILITIES = [
-  { icon: Database, label: 'Live evidence', detail: 'SEC filings + Massive data' },
+  { icon: Database, label: 'Live evidence', detail: 'Filings, markets + ownership' },
   { icon: Braces, label: 'Visible decisions', detail: 'Watch every selected tool' },
   { icon: ShieldCheck, label: 'Bounded agent', detail: 'Read-only · four-call limit' },
 ];

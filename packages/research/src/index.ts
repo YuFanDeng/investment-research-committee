@@ -25,6 +25,17 @@ export type { RecentSecFilings, SecFiling, SecQuarterlyFundamentals } from './to
 export type { QuarterlyRevenue } from './tools/sec-quarterly.js';
 export { MassiveClient, MassiveError } from './tools/massive.js';
 export {
+  FORM4_TRANSACTION_CODES,
+  MassiveForm4Client,
+  MassiveForm4Error,
+} from './tools/massive-form4.js';
+export type {
+  Form4TransactionCode,
+  InsiderTransaction,
+  InsiderTransactionResult,
+  MassiveForm4Query,
+} from './tools/massive-form4.js';
+export {
   calculateSimpleMovingAverages,
   COMMON_MOVING_AVERAGE_PERIODS,
   MAX_MOVING_AVERAGE_PERIOD,

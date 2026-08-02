@@ -10,6 +10,7 @@ import { ToolNode } from '@langchain/langgraph/prebuilt';
 
 import { createResearchModel, getModelSettings } from '../model.js';
 import type { MassiveClient } from '../tools/massive.js';
+import type { MassiveForm4Client } from '../tools/massive-form4.js';
 import type { SecEdgarClient } from '../tools/sec-edgar.js';
 import type { ResearchAssistantRequest } from './schemas.js';
 import { createResearchTools } from './tools/catalog.js';
@@ -24,11 +25,12 @@ type ResearchAssistantRunOptions = {
     'getFundamentals' | 'getQuarterlyFundamentals' | 'getRecentFilings'
   >;
   marketClient: Pick<MassiveClient, 'getMarketSnapshot' | 'getPriceHistory'>;
+  ownershipClient: Pick<MassiveForm4Client, 'getTransactions'>;
 };
 
 function systemPrompt() {
   return `You are a read-only U.S. equity research assistant.
-For a company-specific question, infer the most likely U.S. ticker from the company name or symbol and pass that ticker to every tool. If the company is ambiguous, ask the user to clarify instead of guessing. For an obvious follow-up, use the company established by the recent conversation. State which ticker you researched in the final answer. Choose only the tools needed to answer the question. For quarterly revenue questions, call get_sec_fundamentals with period="quarterly" and use the requested number of quarters; two years means 8 quarters. Cite factual claims with the source IDs returned by tools using [source-id]. Distinguish reported facts from your inference. If evidence is missing, say so. Never invent figures, filing details, or sources. Do not provide personalized investment advice. Keep the final answer concise and educational.`;
+For a company-specific question, infer the most likely U.S. ticker from the company name or symbol and pass that ticker to every tool. If the company is ambiguous, ask the user to clarify instead of guessing. For an obvious follow-up, use the company established by the recent conversation. State which ticker you researched in the final answer. Choose only the tools needed to answer the question. For quarterly revenue questions, call get_sec_fundamentals with period="quarterly" and use the requested number of quarters; two years means 8 quarters. For insider-transaction questions, use get_insider_transactions and preserve the distinction between open-market trades, grants, exercises, tax withholding, gifts, direct or indirect ownership, and disclosed Rule 10b5-1 plan status. When comparing plan, ownership, security, or role categories, make one broad tool call with the relevant filter set to "all" and compare the returned records; do not make one call per category. Do not infer motivation from a sale or from plan status. Cite factual claims with the source IDs returned by tools using [source-id]. Distinguish reported facts from your inference. If evidence is missing, say so. Never invent figures, filing details, or sources. Do not provide personalized investment advice. Keep the final answer concise and educational.`;
 }
 
 function conversationMessages(request: ResearchAssistantRequest): BaseMessage[] {
@@ -59,6 +61,7 @@ export function createResearchAssistantRun(options: ResearchAssistantRunOptions)
   const toolkit = createResearchTools({
     secClient: options.secClient,
     marketClient: options.marketClient,
+    ownershipClient: options.ownershipClient,
   });
   const model = createResearchModel(getModelSettings(options.modelEnvironment));
   const modelWithTools = model.bindTools(toolkit.tools);

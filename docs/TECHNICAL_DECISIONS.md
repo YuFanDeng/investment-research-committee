@@ -27,6 +27,7 @@ This document records the initial implementation choices for the Investment Rese
 | Tool organization       | Domain category modules plus a shared catalog      | Keeps SEC, market, valuation, and future tool families independently readable and testable.                          |
 | Technical indicators    | Pure TypeScript calculations over Massive closes   | Keeps arithmetic deterministic, testable, compact, and independent from model reasoning.                             |
 | Quarterly fundamentals  | Extend `get_sec_fundamentals` with a period option | Keeps the agent's tool catalog small while annual and quarterly SEC normalization remain separate internally.        |
+| Insider transactions    | Dedicated ownership tool backed by Massive Form 4  | Exposes rich ownership filters while keeping classification, summaries, and disclosure semantics deterministic.      |
 
 ## Architecture
 
@@ -79,6 +80,13 @@ The SEC fundamentals tool defaults to the existing annual snapshot and accepts
 a separate pure TypeScript module: it filters cumulative 10-Q facts, prefers filings reported near
 the original period, derives missing Q4 revenue from the annual and nine-month totals, and computes
 QoQ and YoY changes. The result tells the model whether each quarter was reported or derived.
+
+Form 4 research uses a separate ownership tool rather than expanding the market snapshot. The
+provider adapter supports every documented Massive query parameter, while the agent receives
+bounded domain controls for dates, codes, amendments, reporting owners, direct or indirect
+ownership, Rule 10b5-1 status, security type, insider role, and sorting. TypeScript classifies and
+summarizes the returned records; Ollama explains that normalized evidence. See
+[Insider transactions tool](INSIDER_TRANSACTIONS.md).
 
 ## Technical indicators
 

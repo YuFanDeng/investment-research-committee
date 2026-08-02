@@ -1,4 +1,5 @@
 import type { Source } from '../../schemas.js';
+import type { MassiveForm4Client } from '../../tools/massive-form4.js';
 import type { MassiveClient } from '../../tools/massive.js';
 import type { SecEdgarClient } from '../../tools/sec-edgar.js';
 
@@ -7,10 +8,12 @@ export type SecToolClient = Pick<
   'getFundamentals' | 'getQuarterlyFundamentals' | 'getRecentFilings'
 >;
 export type MarketToolClient = Pick<MassiveClient, 'getMarketSnapshot' | 'getPriceHistory'>;
+export type OwnershipToolClient = Pick<MassiveForm4Client, 'getTransactions'>;
 
 export type CreateResearchToolContextOptions = {
   secClient: SecToolClient;
   marketClient: MarketToolClient;
+  ownershipClient: OwnershipToolClient;
 };
 
 export function createResearchToolContext(options: CreateResearchToolContextOptions) {
@@ -28,10 +31,15 @@ export function createResearchToolContext(options: CreateResearchToolContextOpti
     string,
     ReturnType<MarketToolClient['getPriceHistory']>
   >();
+  const insiderTransactionsByQuery = new Map<
+    string,
+    ReturnType<OwnershipToolClient['getTransactions']>
+  >();
 
   return {
     secClient: options.secClient,
     marketClient: options.marketClient,
+    ownershipClient: options.ownershipClient,
     collectSource(source: Source) {
       sources.set(source.id, source);
     },
@@ -71,6 +79,15 @@ export function createResearchToolContext(options: CreateResearchToolContextOpti
 
       const request = options.marketClient.getPriceHistory(normalizedTicker, days);
       priceHistoryByTickerAndRange.set(cacheKey, request);
+      return request;
+    },
+    getInsiderTransactions(query: Parameters<OwnershipToolClient['getTransactions']>[0]) {
+      const cacheKey = JSON.stringify(query);
+      const existingRequest = insiderTransactionsByQuery.get(cacheKey);
+      if (existingRequest) return existingRequest;
+
+      const request = options.ownershipClient.getTransactions(query);
+      insiderTransactionsByQuery.set(cacheKey, request);
       return request;
     },
     getSources() {

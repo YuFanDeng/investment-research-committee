@@ -26,6 +26,7 @@ Switching modes preserves both the conversation and committee state.
 | `get_price_history`           | Summarize a bounded 30, 90, or 365-day price range.                      |
 | `calculate_valuation_metrics` | Calculate earnings and cash-flow multiples deterministically.            |
 | `calculate_moving_averages`   | Calculate common simple moving averages from adjusted daily closes.      |
+| `get_insider_transactions`    | Filter and summarize normalized SEC Form 4 ownership transactions.       |
 
 Every company-data tool requires a Zod-validated ticker argument. Tools return compact JSON with
 source IDs. The model resolves the company, chooses tools, and explains results, while TypeScript
@@ -39,6 +40,11 @@ three-month values from cumulative 10-Q facts, removes later comparative duplica
 QoQ and YoY changes, and derives Q4 as annual revenue minus the reported nine-month total when the
 10-K does not publish a standalone fourth quarter. Every derived quarter is labeled in the result.
 
+`get_insider_transactions` accepts bounded date, filing, transaction-code, owner, ownership,
+Rule 10b5-1, security, role, and sorting controls. Massive's complete Form 4 response is normalized
+into three-state disclosures and compact transaction records before it reaches the model. See
+[Insider transactions tool](INSIDER_TRANSACTIONS.md).
+
 ## Tool organization
 
 Tool implementations are grouped by research domain so the catalog can grow without becoming a
@@ -50,12 +56,14 @@ assistant/tools/
 ├── context.ts    # Per-run clients, request cache, and source collection
 ├── sec.ts        # SEC fundamentals and filing tools
 ├── market.ts     # Market snapshot and price-history tools
+├── ownership.ts  # Form 4 tool contract and provider orchestration
+├── ownership-analysis.ts # Deterministic filtering, summaries, and compact results
 ├── technical.ts  # Deterministic technical-indicator tools
 └── valuation.ts  # Deterministic valuation tools
 ```
 
-A future category, such as news or insider activity, should add its own module and register its tool
-list in `catalog.ts`. Cross-category request caching and source tracking stay in `context.ts`.
+A future category, such as news, should add its own module and register its tool list in
+`catalog.ts`. Cross-category request caching and source tracking stay in `context.ts`.
 
 ## Graph shape
 
@@ -82,6 +90,8 @@ the UI can show which tool was requested and when it completed.
 - One run can execute at most four tool calls.
 - Price ranges are restricted to 30, 90, or 365 days.
 - Quarterly SEC revenue requests are limited to 1–12 periods, with 8 as the default.
+- Form 4 scans are bounded at 250 provider records and return at most 12 compact transactions.
+- Missing Rule 10b5-1 and direct/indirect fields remain `not_disclosed` rather than false.
 - Moving-average periods accept one to six integer values from 2 through 250 trading sessions;
   common defaults are 20, 50, and 200.
 - Price history is summarized before reaching the model to protect the 4,096-token context window.

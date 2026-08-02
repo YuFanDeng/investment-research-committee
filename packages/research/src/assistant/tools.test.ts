@@ -72,6 +72,45 @@ function createToolkit(onPriceHistoryRequest: () => void = () => undefined) {
         };
       },
     },
+    ownershipClient: {
+      getTransactions: async () => ({
+        transactions: [
+          {
+            accessionNumber: '0000000000-26-000001',
+            filingDate: '2026-07-15',
+            filingUrl: 'https://www.sec.gov/test-form-4',
+            formType: '4',
+            issuerName: 'Test Company',
+            tickers: ['TEST'],
+            ownerCik: '0000000001',
+            ownerName: 'Test Insider',
+            officerTitle: 'Chief Executive Officer',
+            roles: ['officer' as const],
+            transactionDate: '2026-07-14',
+            transactionCode: 'S',
+            acquiredOrDisposed: 'disposed' as const,
+            shares: 100,
+            pricePerShare: 20,
+            value: 2_000,
+            planStatus: 'reported_10b5_1' as const,
+            ownershipType: 'indirect' as const,
+            natureOfOwnership: 'By Trust',
+            filingTimeliness: 'on_time' as const,
+            footnotes: [],
+            recordType: 'transaction',
+          },
+        ],
+        sources: [
+          {
+            id: 'sec-form4-0000000000-26-000001',
+            title: 'Test Company — Form 4',
+            url: 'https://www.sec.gov/test-form-4',
+            sourceType: 'sec_filing' as const,
+            retrievedAt: '2026-07-31T00:00:00.000Z',
+          },
+        ],
+      }),
+    },
   });
 }
 
@@ -171,5 +210,50 @@ describe('research assistant tools', () => {
       ).rejects.toThrow();
     }
     expect(priceHistoryRequests).toBe(0);
+  });
+
+  it('summarizes plan and ownership context for insider transactions', async () => {
+    const toolkit = createToolkit();
+    const insiderTool = toolkit.tools.find(
+      (candidate) => candidate.name === 'get_insider_transactions',
+    );
+
+    const result = JSON.parse(
+      String(
+        await insiderTool!.invoke({
+          ticker: 'TEST',
+          lookbackDays: 90,
+          ownershipType: 'indirect',
+          planStatus: 'reported_10b5_1',
+          securityType: 'all',
+          formType: 'original',
+          sortBy: 'transaction_date',
+          sortOrder: 'desc',
+          limit: 10,
+        }),
+      ),
+    ) as Record<string, unknown>;
+
+    expect(result).toMatchObject({
+      ticker: 'TEST',
+      matchedTransactionCount: 1,
+      summary: {
+        transactionCount: 1,
+        byPlanStatus: { reported_10b5_1: 1 },
+        byOwnershipType: { indirect: 1 },
+      },
+      transactions: [
+        {
+          executionContext: {
+            planStatus: 'reported_10b5_1',
+            ownershipType: 'indirect',
+            natureOfOwnership: 'By Trust',
+          },
+        },
+      ],
+    });
+    expect(toolkit.getSources().map((source) => source.id)).toEqual([
+      'sec-form4-0000000000-26-000001',
+    ]);
   });
 });

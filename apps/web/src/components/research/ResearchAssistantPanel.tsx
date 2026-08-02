@@ -17,17 +17,20 @@ const TOOL_LABELS: Record<string, string> = {
   get_price_history: 'Price history',
   calculate_valuation_metrics: 'Valuation metrics',
   calculate_moving_averages: 'Moving averages',
+  get_insider_transactions: 'Insider transactions',
 };
 
 const LIVE_SUGGESTED_QUESTIONS = [
   'Is Apple above its 200-day moving average?',
   "What do Microsoft's latest fundamentals say?",
+  'Were recent GNRC insider sales reported under 10b5-1 plans?',
   'What valuation limitations should I consider for Nvidia?',
 ];
 
 const FIXTURE_SUGGESTED_QUESTIONS = [
   'Is Apple above its 200-day moving average?',
   "What do Apple's latest fundamentals say?",
+  'Were recent Apple insider sales reported under 10b5-1 plans?',
   'What valuation limitations should I consider for Apple?',
 ];
 
@@ -177,7 +180,7 @@ export function ResearchAssistantPanel({ secDataMode }: ResearchAssistantPanelPr
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
           onKeyDown={handleQuestionKeyDown}
-          placeholder="Ask about a company, its filings, price trends, fundamentals, or valuation…"
+          placeholder="Ask about filings, insider activity, prices, fundamentals, or valuation…"
           maxLength={1_000}
           disabled={isLoading}
           aria-describedby="assistant-composer-help"

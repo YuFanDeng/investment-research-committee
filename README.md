@@ -21,6 +21,7 @@ The application now demonstrates two complementary LangGraph patterns.
 - Let the model resolve the company and select from categorized, read-only research tools.
 - Inspect live tool calls for SEC filings, fundamentals, market data, valuation, and moving averages.
 - Retrieve annual fundamentals or a quarterly SEC revenue trend through one model-selected tool.
+- Filter recent Form 4 insider activity by transaction, ownership, role, and Rule 10b5-1 context.
 - Support common and custom moving-average periods through deterministic calculations.
 - Stream tool activity, sourced results, and the final conversational answer to the UI.
 
@@ -62,10 +63,12 @@ flowchart TB
     Catalog --> Market[Market snapshot and history]
     Catalog --> Valuation[Valuation metrics]
     Catalog --> Technical[Moving averages]
+    Catalog --> Ownership[Form 4 insider transactions]
     SEC --> Result[Compact sourced result]
     Market --> Result
     Valuation --> Result
     Technical --> Result
+    Ownership --> Result
     Result -->|ToolMessage| Model
     Model -->|No tool call| Answer[Source-backed answer]
     Answer -. SSE .-> UI
@@ -115,6 +118,7 @@ pnpm format:check  # Verify formatting without changing files
 - [Human approval interrupts](docs/HUMAN_APPROVAL.md)
 - [Conversational tool-calling agent](docs/TOOL_CALLING_AGENT.md)
 - [Technical analysis tools](docs/TECHNICAL_ANALYSIS.md)
+- [Insider transactions tool](docs/INSIDER_TRANSACTIONS.md)
 - [Market-data provider](docs/MARKET_DATA_PROVIDER.md)
 - [Testing strategy](docs/TESTING.md)
 - [System architecture](docs/ARCHITECTURE.md)

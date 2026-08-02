@@ -24,6 +24,11 @@ exact SMA values, above/below classification, insufficient-history behavior, sup
 validation, custom 120-session requests, duplicate normalization, and reuse of cached 365-day
 Massive history across tools.
 
+Form 4 adapter tests verify all documented provider query parameters, response normalization,
+three-state plan and ownership disclosures, source creation, and missing-field behavior. Injected
+tool tests verify semantic filtering, deterministic summaries, compact execution context, and source
+collection without calling Massive or Ollama.
+
 ## Fixture
 
 The fixture is the raw SEC Company Facts response captured for Apple:

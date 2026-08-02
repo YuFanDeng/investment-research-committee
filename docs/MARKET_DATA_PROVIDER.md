@@ -31,7 +31,7 @@ Useful references:
    existing SEC and Ollama values, and add:
 
    ```sh
-   # edit apps/api/.env
+   # edit .env
    ```
 
 4. Add the key to `.env`:
@@ -68,6 +68,14 @@ type MarketSnapshot = {
 The adapter, not the LLM, will calculate price returns, volatility, drawdown, and valuation
 ratios. The valuation analyst will interpret those typed values and identify missing inputs.
 
+## Form 4 ownership data
+
+Massive also provides normalized SEC Form 4 data through an early-access endpoint. Ownership data
+uses a separate adapter and agent-tool category because transaction codes, reporting-person roles,
+Rule 10b5-1 status, and direct or indirect ownership have different interpretation rules from
+prices. The API key and server-only boundary remain the same. See
+[Insider transactions tool](INSIDER_TRANSACTIONS.md).
+
 ## Scope and limitations
 
 - End-of-day data is sufficient for the first research memo; real-time data is explicitly
@@ -84,4 +92,4 @@ ratios. The valuation analyst will interpret those typed values and identify mis
   requests per day and several full-history or real-time endpoints are premium.
 - **Yahoo Finance:** convenient for local experiments, but common Node integrations use
   unofficial endpoints and Yahoo's terms restrict automated collection and data reuse. It is
-  not the default provider for this portfolio project.
+  not the default provider for this project.
