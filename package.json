@@ -1,5 +1,5 @@
 {
-  "name": "investment-research-committee",
+  "name": "alpha-verifier",
   "private": true,
   "packageManager": "pnpm@10.0.0",
   "scripts": {

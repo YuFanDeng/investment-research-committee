@@ -1,4 +1,4 @@
-# Investment Research Committee — High-Level Plan
+# AlphaVerifier — High-Level Plan
 
 ## Project goal
 

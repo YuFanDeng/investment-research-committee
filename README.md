@@ -1,6 +1,7 @@
-# Investment Research Committee
+# AlphaVerifier
 
-A source-backed, educational equity-research workflow built with React, Vite, Hono, LangGraph.js, and Zod.
+A source-backed equity research workspace that helps investors test a thesis against financial,
+market, technical, and ownership evidence. Built with React, Vite, Hono, LangGraph.js, and Zod.
 
 ## Current milestone
 

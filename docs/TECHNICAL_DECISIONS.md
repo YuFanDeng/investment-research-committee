@@ -1,6 +1,6 @@
 # Technical Decisions
 
-This document records the initial implementation choices for the Investment Research Committee project.
+This document records the implementation choices for AlphaVerifier.
 
 ## Locked-in stack
 

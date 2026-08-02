@@ -8,9 +8,9 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <a className="brand" href="/" aria-label="Investment Research Committee home">
-          <span className="brand-mark">IR</span>
-          <span>Investment Research Committee</span>
+        <a className="brand" href="/" aria-label="AlphaVerifier home">
+          <span className="brand-mark">AV</span>
+          <span>AlphaVerifier</span>
         </a>
         <span className="topbar-status">
           <span className="status-dot" /> Local research workspace

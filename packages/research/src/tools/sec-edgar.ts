@@ -164,7 +164,7 @@ export class SecEdgarClient {
   constructor(contactEmail: string) {
     if (!contactEmail)
       throw new SecEdgarError('SEC_CONTACT_EMAIL must be configured before calling SEC EDGAR.');
-    this.userAgent = `Investment Research Committee ${contactEmail}`;
+    this.userAgent = `AlphaVerifier ${contactEmail}`;
   }
 
   private async requestJson(url: string): Promise<unknown> {
