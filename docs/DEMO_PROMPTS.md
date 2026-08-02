@@ -119,6 +119,15 @@ Calculate Amazon's 120-day moving average and compare it with the latest closing
 Demonstrates that moving-average periods are validated integers from 2 through 250 rather than a
 fixed list of common periods.
 
+### Momentum and volatility dashboard
+
+```text
+For Nvidia, show the 20-day EMA, 14-day RSI, standard MACD, and 20-day Bollinger Bands. Explain what agrees and what conflicts without giving a trading recommendation.
+```
+
+Demonstrates grouped technical tools, cached price-history reuse, separate indicator scales, merged
+price overlays, and interactive series visibility controls.
+
 ### Direct versus indirect ownership
 
 ```text

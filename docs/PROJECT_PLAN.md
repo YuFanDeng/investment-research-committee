@@ -15,7 +15,7 @@ The first data-research vertical slice is complete:
 - The SEC client selects complete annual revenue, net income, and operating cash flow from a common reporting-period end date. This avoids mistaking comparative figures in a later filing for the current fiscal year.
 - Invalid or unrecognized tickers produce a structured workflow error rather than an unsupported memo.
 - A separate bounded LangGraph agent can answer focused follow-up questions by selecting SEC,
-  market, price-history, moving-average, deterministic valuation, and Form 4 ownership tools.
+  market, price-history, technical-indicator, deterministic valuation, and Form 4 ownership tools.
 - Tool activity and linked sources stream into the React workspace so users can inspect how each
   answer was assembled.
 
@@ -35,7 +35,7 @@ Give the workflow bounded, reliable tools for:
 - Market data: price history, market capitalization, valuation metrics, and earnings dates.
 - SEC EDGAR filings: recent 10-K, 10-Q, and 8-K documents.
 - News: recent company news, including source URLs and publication dates.
-- Calculations: returns, moving averages, valuation comparisons, and basic ratios.
+- Calculations: returns, technical indicators, valuation comparisons, and basic ratios.
 
 Store tool responses, source URLs, and timestamps in the graph state so citations and debugging are straightforward.
 

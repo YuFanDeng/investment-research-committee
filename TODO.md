@@ -21,6 +21,7 @@ with local-model fallbacks, Massive market data, and live LangGraph progress in 
 - [x] Add a checkpointed human approval interrupt before final chair synthesis.
 - [x] Add a bounded conversational agent with visible read-only tool calls.
 - [x] Add deterministic 2–250-session moving averages with common 5, 10, 20, 50, 100, and 200 defaults.
+- [x] Add close-only EMA, RSI, MACD, and Bollinger Bands with interactive chart-series controls.
 - [x] Extend SEC fundamentals with normalized quarterly revenue, QoQ/YoY changes, and transparent Q4 derivation.
 - [x] Add bounded Form 4 insider-transaction research with plan and ownership context.
 - [x] Add versioned rich Agent Chat responses with Markdown, charts, metrics, tables, and safe
@@ -33,7 +34,7 @@ with local-model fallbacks, Massive market data, and live LangGraph progress in 
 - [ ] Add screenshot examples and a short evaluation report for the project overview.
 - [ ] Add stronger analyst evaluation fixtures and regression tests for memo quality.
 - [ ] Add durable run history with a database and LangGraph checkpointer.
-- [ ] Add EMA, crossover, and chart-overlay technical analysis after the SMA tool is evaluated.
+- [ ] Expand normalized market bars with high, low, and volume for ATR and volume analysis.
 - [ ] Add richer market-data ranges and explicit valuation multiples when the provider supports them.
 - [ ] Add authentication and portfolio features only if the product scope expands beyond the demo.
 

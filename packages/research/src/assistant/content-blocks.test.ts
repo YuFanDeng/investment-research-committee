@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMovingAverageBlock,
-  createPriceHistoryBlock,
-  mergeContentBlock,
-} from './content-block-builders.js';
+import { createPriceHistoryBlock, mergeContentBlock } from './content-block-builders.js';
 import { ASSISTANT_CONTENT_VERSION, AssistantContentEnvelopeSchema } from './content-blocks.js';
+import { createMovingAverageBlock } from './technical-content-blocks.js';
 
 describe('assistant content contract', () => {
   it('validates a versioned mixture of narrative and visualization blocks', () => {
@@ -52,14 +49,14 @@ describe('assistant content contract', () => {
       { date: '2026-07-02', close: 12 },
       { date: '2026-07-03', close: 14 },
     ];
-    const movingAverage = createMovingAverageBlock('TEST', bars, [2], 'market-test');
+    const movingAverage = createMovingAverageBlock('TEST', bars, [2], ['sma'], 'market-test');
     const priceHistory = createPriceHistoryBlock('TEST', bars, 'market-test');
     const merged = mergeContentBlock(movingAverage, priceHistory);
 
     expect(merged).toMatchObject({
       type: 'line-chart',
       title: 'TEST price and moving averages',
-      series: [{ key: 'close' }, { key: 'ma2' }],
+      series: [{ key: 'close' }, { key: 'sma2' }],
     });
   });
 });

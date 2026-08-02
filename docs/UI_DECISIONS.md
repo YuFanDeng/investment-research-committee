@@ -29,6 +29,7 @@ This document records the design decisions for the research workspace redesign.
 | Agent response format  | Versioned typed blocks plus Markdown narrative                              | Supports charts and domain components without parsing prose or allowing the model to generate React.                                     |
 | Markdown rendering     | `react-markdown` with `remark-gfm`; raw HTML disabled                       | Makes model output readable while keeping untrusted HTML out of the page.                                                                |
 | Rich-result fallback   | Expandable formatted JSON for unknown blocks                                | Preserves forward compatibility when a newer server adds a block the current UI does not recognize.                                      |
+| Chart series controls  | Accessible pressed-state buttons above multi-series line charts             | Lets users isolate SMA, EMA, Bollinger, RSI, or MACD series without refetching data.                                                     |
 
 ## Component model
 
@@ -89,6 +90,8 @@ ApplicationShell
   viewports.
 - Tool-derived visualizations retain source IDs and do not rely on the model to reproduce numeric
   series.
+- Multi-series line charts expose text-labeled, keyboard-accessible visibility toggles; visibility
+  is never communicated by color alone.
 
 ## Scope boundary
 

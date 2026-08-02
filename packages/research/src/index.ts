@@ -55,6 +55,18 @@ export {
   MIN_MOVING_AVERAGE_PERIOD,
 } from './technical/moving-average.js';
 export type { MovingAverage, MovingAveragePeriod } from './technical/moving-average.js';
+export {
+  calculateExponentialMovingAverages,
+  exponentialMovingAverageSeries,
+} from './technical/exponential-moving-average.js';
+export {
+  calculateRelativeStrengthIndex,
+  relativeStrengthIndexSeries,
+} from './technical/relative-strength-index.js';
+export { calculateMacd, macdSeries } from './technical/macd.js';
+export type { MacdPoint, MacdSettings } from './technical/macd.js';
+export { bollingerBandSeries, calculateBollingerBands } from './technical/bollinger-bands.js';
+export type { BollingerBandPoint } from './technical/bollinger-bands.js';
 export { FixtureSecEdgarClient } from './tools/mock-data.js';
 export {
   FundamentalsSchema,

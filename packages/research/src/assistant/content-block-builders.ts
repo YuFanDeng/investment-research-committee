@@ -59,50 +59,6 @@ export function createPriceHistoryBlock(
   };
 }
 
-function rollingAverage(bars: MarketBar[], period: number) {
-  let rollingTotal = 0;
-  return bars.map((bar, index) => {
-    rollingTotal += bar.close;
-    if (index >= period) rollingTotal -= bars[index - period].close;
-    return index + 1 >= period ? round(rollingTotal / period) : null;
-  });
-}
-
-export function createMovingAverageBlock(
-  ticker: string,
-  rawBars: MarketBar[],
-  periods: number[],
-  sourceId: string,
-): LineChartContentBlock {
-  const bars = [...rawBars].sort((left, right) => left.date.localeCompare(right.date));
-  const averages = periods.map((period) => ({ period, values: rollingAverage(bars, period) }));
-
-  return {
-    type: 'line-chart',
-    id: `price-history-${ticker}`,
-    title: `${ticker} price and moving averages`,
-    description: 'Adjusted daily closes with deterministic simple moving-average overlays',
-    sourceIds: [sourceId],
-    xKey: 'date',
-    valueFormat: 'currency',
-    series: [
-      { key: 'close', label: 'Close', color: CHART_COLORS[0] },
-      ...periods.map((period, index) => ({
-        key: `ma${period}`,
-        label: `${period}-day MA`,
-        color: CHART_COLORS[(index + 1) % CHART_COLORS.length],
-      })),
-    ],
-    data: bars.map((bar, index) => ({
-      date: bar.date,
-      close: bar.close,
-      ...Object.fromEntries(
-        averages.map(({ period, values }) => [`ma${period}`, values[index] ?? null]),
-      ),
-    })),
-  };
-}
-
 export function createQuarterlyRevenueBlock(
   ticker: string,
   quarters: QuarterlyRevenue[],

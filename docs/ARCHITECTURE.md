@@ -50,7 +50,7 @@ flowchart TB
     Catalog --> SECtools[SEC fundamentals and filings]
     Catalog --> MarketTools[Market snapshot and history]
     Catalog --> ValuationTools[Valuation metrics]
-    Catalog --> TechnicalTools[Moving averages]
+    Catalog --> TechnicalTools[SMA, EMA, RSI, MACD, and Bollinger Bands]
     Catalog --> OwnershipTools[Form 4 insider transactions]
     SEC[(SEC EDGAR)] --> SECtools
     Massive[(Massive market data)] --> MarketTools

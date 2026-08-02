@@ -225,8 +225,54 @@ describe('research assistant tools', () => {
       {
         type: 'line-chart',
         id: 'price-history-TEST',
-        series: [{ key: 'close' }, { key: 'ma120' }],
+        series: [{ key: 'close' }, { key: 'sma120' }],
       },
+    ]);
+  });
+
+  it('calculates EMA, RSI, MACD, and Bollinger summaries through grouped tools', async () => {
+    let priceHistoryRequests = 0;
+    const toolkit = createToolkit(() => {
+      priceHistoryRequests += 1;
+    });
+    const movingAverageTool = toolkit.tools.find(
+      (candidate) => candidate.name === 'calculate_moving_averages',
+    );
+    const momentumTool = toolkit.tools.find(
+      (candidate) => candidate.name === 'calculate_momentum_indicators',
+    );
+    const volatilityTool = toolkit.tools.find(
+      (candidate) => candidate.name === 'calculate_volatility_indicators',
+    );
+
+    const movingAverageResult = JSON.parse(
+      String(
+        await movingAverageTool!.invoke({
+          ticker: 'TEST',
+          periods: [2],
+          averageTypes: ['ema'],
+        }),
+      ),
+    ) as { calculation: string; movingAverages: Array<Record<string, unknown>> };
+    const momentumResult = JSON.parse(
+      String(await momentumTool!.invoke({ ticker: 'TEST', indicators: ['rsi', 'macd'] })),
+    ) as Record<string, { status: string }>;
+    const volatilityResult = JSON.parse(
+      String(await volatilityTool!.invoke({ ticker: 'TEST' })),
+    ) as { bollingerBands: { status: string } };
+
+    expect(movingAverageResult).toMatchObject({
+      calculation: 'exponential_moving_average',
+      movingAverages: [{ averageType: 'ema', period: 2, status: 'available', value: 11 }],
+    });
+    expect(momentumResult.rsi.status).toBe('insufficient_data');
+    expect(momentumResult.macd.status).toBe('insufficient_data');
+    expect(volatilityResult.bollingerBands.status).toBe('insufficient_data');
+    expect(priceHistoryRequests).toBe(1);
+    expect(toolkit.getContentBlocks().map((block) => block.id)).toEqual([
+      'price-history-TEST',
+      'rsi-TEST-14',
+      'macd-TEST-12-26-9',
     ]);
   });
 
@@ -241,6 +287,27 @@ describe('research assistant tools', () => {
         movingAverageTool!.invoke({ ticker: 'TEST', periods: [invalidPeriod] }),
       ).rejects.toThrow();
     }
+    expect(priceHistoryRequests).toBe(0);
+  });
+
+  it('rejects invalid momentum and volatility settings before requesting market data', async () => {
+    let priceHistoryRequests = 0;
+    const toolkit = createToolkit(() => {
+      priceHistoryRequests += 1;
+    });
+    const momentumTool = toolkit.tools.find(
+      (candidate) => candidate.name === 'calculate_momentum_indicators',
+    );
+    const volatilityTool = toolkit.tools.find(
+      (candidate) => candidate.name === 'calculate_volatility_indicators',
+    );
+
+    await expect(
+      momentumTool!.invoke({ ticker: 'TEST', macdFastPeriod: 26, macdSlowPeriod: 12 }),
+    ).rejects.toThrow('slow period');
+    await expect(
+      volatilityTool!.invoke({ ticker: 'TEST', standardDeviations: 5 }),
+    ).rejects.toThrow();
     expect(priceHistoryRequests).toBe(0);
   });
 

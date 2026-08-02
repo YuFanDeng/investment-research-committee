@@ -1,9 +1,11 @@
 import type { LineChartContentBlock } from '@investment-research/research/assistant-content';
+import { Eye, EyeOff } from 'lucide-react';
+import { useState } from 'react';
 import {
   CartesianGrid,
-  Legend,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -27,6 +29,16 @@ function axisDate(value: unknown) {
 }
 
 export function AgentLineChart({ block }: { block: LineChartContentBlock }) {
+  const [hiddenSeries, setHiddenSeries] = useState<string[]>([]);
+
+  function toggleSeries(seriesKey: string) {
+    setHiddenSeries((current) =>
+      current.includes(seriesKey)
+        ? current.filter((key) => key !== seriesKey)
+        : [...current, seriesKey],
+    );
+  }
+
   return (
     <section className="assistant-rich-block" aria-labelledby={`${block.id}-heading`}>
       <div className="assistant-rich-heading">
@@ -35,6 +47,26 @@ export function AgentLineChart({ block }: { block: LineChartContentBlock }) {
           {block.description ? <p>{block.description}</p> : null}
         </div>
       </div>
+      {block.series.length > 1 ? (
+        <div className="assistant-series-controls" aria-label={`${block.title} visible series`}>
+          {block.series.map((series) => {
+            const isVisible = !hiddenSeries.includes(series.key);
+            return (
+              <button
+                type="button"
+                key={series.key}
+                className={isVisible ? 'is-visible' : undefined}
+                aria-pressed={isVisible}
+                onClick={() => toggleSeries(series.key)}
+              >
+                <span style={{ backgroundColor: series.color }} aria-hidden="true" />
+                {series.label}
+                {isVisible ? <Eye size={12} /> : <EyeOff size={12} />}
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
       <div className="assistant-chart" role="img" aria-label={block.title}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={block.data} margin={{ top: 8, right: 10, bottom: 4, left: 2 }}>
@@ -73,7 +105,15 @@ export function AgentLineChart({ block }: { block: LineChartContentBlock }) {
                 fontSize: '12px',
               }}
             />
-            <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }} />
+            {block.referenceLines?.map((referenceLine) => (
+              <ReferenceLine
+                key={`${referenceLine.value}-${referenceLine.label ?? ''}`}
+                y={referenceLine.value}
+                label={referenceLine.label}
+                stroke={referenceLine.color ?? '#94a3b8'}
+                strokeDasharray="4 4"
+              />
+            ))}
             {block.series.map((series) => (
               <Line
                 key={series.key}
@@ -83,6 +123,7 @@ export function AgentLineChart({ block }: { block: LineChartContentBlock }) {
                 stroke={series.color}
                 strokeWidth={series.key === 'close' ? 2.5 : 1.7}
                 strokeDasharray={series.key === 'close' ? undefined : '5 4'}
+                hide={hiddenSeries.includes(series.key)}
                 dot={false}
                 connectNulls={false}
                 activeDot={{ r: 3 }}

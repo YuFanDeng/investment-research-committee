@@ -19,10 +19,10 @@ The application now demonstrates two complementary LangGraph patterns.
 
 - Ask natural-language company questions without choosing a ticker first.
 - Let the model resolve the company and select from categorized, read-only research tools.
-- Inspect live tool calls for SEC filings, fundamentals, market data, valuation, and moving averages.
+- Inspect live tool calls for SEC filings, fundamentals, market data, valuation, and technical indicators.
 - Retrieve annual fundamentals or a quarterly SEC revenue trend through one model-selected tool.
 - Filter recent Form 4 insider activity by transaction, ownership, role, and Rule 10b5-1 context.
-- Support common and custom moving-average periods through deterministic calculations.
+- Support SMA, EMA, RSI, MACD, and Bollinger Bands through deterministic close-only calculations.
 - Stream tool activity, sourced results, and the final conversational answer to the UI.
 
 Committee mode has deterministic fallbacks when Ollama is unavailable. Agent Chat intentionally
@@ -62,7 +62,7 @@ flowchart TB
     Catalog --> SEC[SEC fundamentals and filings]
     Catalog --> Market[Market snapshot and history]
     Catalog --> Valuation[Valuation metrics]
-    Catalog --> Technical[Moving averages]
+    Catalog --> Technical[SMA, EMA, RSI, MACD, and Bollinger Bands]
     Catalog --> Ownership[Form 4 insider transactions]
     SEC --> Result[Compact sourced result]
     Market --> Result

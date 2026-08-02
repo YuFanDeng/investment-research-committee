@@ -18,15 +18,17 @@ Switching modes preserves both the conversation and committee state.
 
 ## Initial tool catalog
 
-| Tool                          | Responsibility                                                           |
-| ----------------------------- | ------------------------------------------------------------------------ |
-| `get_sec_fundamentals`        | Retrieve annual SEC fundamentals or a bounded quarterly revenue trend.   |
-| `get_recent_filings`          | Find recent 10-K, 10-Q, or 8-K filing metadata and source links.         |
-| `get_market_snapshot`         | Retrieve the latest end-of-day price, market cap, and related companies. |
-| `get_price_history`           | Summarize a bounded 30, 90, or 365-day price range.                      |
-| `calculate_valuation_metrics` | Calculate earnings and cash-flow multiples deterministically.            |
-| `calculate_moving_averages`   | Calculate common simple moving averages from adjusted daily closes.      |
-| `get_insider_transactions`    | Filter and summarize normalized SEC Form 4 ownership transactions.       |
+| Tool                              | Responsibility                                                           |
+| --------------------------------- | ------------------------------------------------------------------------ |
+| `get_sec_fundamentals`            | Retrieve annual SEC fundamentals or a bounded quarterly revenue trend.   |
+| `get_recent_filings`              | Find recent 10-K, 10-Q, or 8-K filing metadata and source links.         |
+| `get_market_snapshot`             | Retrieve the latest end-of-day price, market cap, and related companies. |
+| `get_price_history`               | Summarize a bounded 30, 90, or 365-day price range.                      |
+| `calculate_valuation_metrics`     | Calculate earnings and cash-flow multiples deterministically.            |
+| `calculate_moving_averages`       | Calculate SMA/EMA trend measures and interactive price overlays.         |
+| `calculate_momentum_indicators`   | Calculate Wilder RSI and MACD from adjusted daily closes.                |
+| `calculate_volatility_indicators` | Calculate and visualize close-only Bollinger Bands.                      |
+| `get_insider_transactions`        | Filter and summarize normalized SEC Form 4 ownership transactions.       |
 
 Every company-data tool requires a Zod-validated ticker argument. Tools return compact JSON with
 source IDs. The model resolves the company, chooses tools, and explains results, while TypeScript
@@ -102,8 +104,11 @@ quarterly revenue bars, and insider tables to reach React without consuming Olla
 - Quarterly SEC revenue requests are limited to 1–12 periods, with 8 as the default.
 - Form 4 scans are bounded at 250 provider records and return at most 12 compact transactions.
 - Missing Rule 10b5-1 and direct/indirect fields remain `not_disclosed` rather than false.
-- Moving-average periods accept one to six integer values from 2 through 250 trading sessions;
-  common defaults are 20, 50, and 200.
+- SMA/EMA periods accept one to six integer values from 2 through 250 trading sessions; common
+  defaults are 20, 50, and 200.
+- RSI defaults to 14 sessions; MACD defaults to 12/26/9 and requires the slow period to exceed the
+  fast period.
+- Bollinger Bands default to a 20-session SMA plus or minus two population standard deviations.
 - Price history is summarized before reaching the model to protect the 4,096-token context window.
 - Financial ratios and technical indicators are calculated from retrieved values, never by model
   arithmetic.
@@ -123,4 +128,5 @@ pretending that an autonomous tool decision occurred.
 - The in-memory execution is suitable for local single-user development, not a multi-instance deployment.
 - Valuation metrics use annual SEC facts and end-of-day market capitalization; they are educational
   screening ratios, not a full valuation model.
-- Moving averages use historical daily closes and describe price position, not a trading signal.
+- Technical indicators use historical daily closes and describe trend, momentum, or dispersion;
+  they do not produce trading instructions.

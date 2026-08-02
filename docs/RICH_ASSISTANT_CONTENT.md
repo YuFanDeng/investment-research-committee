@@ -26,13 +26,13 @@ every daily close for React while Ollama receives only a 12-point sample and cal
 The shared Zod contract lives in `packages/research/src/assistant/content-blocks.ts` and is exported
 through `@investment-research/research/assistant-content`.
 
-| Block type    | Current producer                  | React presentation                  |
-| ------------- | --------------------------------- | ----------------------------------- |
-| `markdown`    | Final model answer                | GitHub-flavored Markdown            |
-| `line-chart`  | Price history and moving averages | Recharts multi-series line chart    |
-| `bar-chart`   | Quarterly SEC fundamentals        | Recharts quarterly revenue bars     |
-| `metric-grid` | Insider transaction summary       | Four compact summary metrics        |
-| `data-table`  | Insider transaction details       | Expandable, horizontally safe table |
+| Block type    | Current producer                       | React presentation                  |
+| ------------- | -------------------------------------- | ----------------------------------- |
+| `markdown`    | Final model answer                     | GitHub-flavored Markdown            |
+| `line-chart`  | Price history and technical indicators | Recharts multi-series line chart    |
+| `bar-chart`   | Quarterly SEC fundamentals             | Recharts quarterly revenue bars     |
+| `metric-grid` | Insider transaction summary            | Four compact summary metrics        |
+| `data-table`  | Insider transaction details            | Expandable, horizontally safe table |
 
 Every non-Markdown block has a stable ID, title, optional description, and source IDs. Chart and
 table values are restricted to JSON primitives. The API validates the complete envelope before it
@@ -42,9 +42,9 @@ crosses the SSE boundary.
 
 - `get_price_history` collects a line chart containing the complete adjusted daily-close series.
   Its compact tool result sent to the model remains unchanged.
-- `calculate_moving_averages` calculates rolling series in TypeScript and merges them into the
-  ticker's existing price chart by stable block ID. It works whether price history or moving
-  averages run first.
+- Technical tools calculate SMA, EMA, RSI, MACD, and Bollinger series in TypeScript. Price-based
+  overlays merge by stable block ID, while RSI and MACD use separate scaled charts. Interactive
+  controls can hide or restore any line without another provider request.
 - Quarterly `get_sec_fundamentals` creates a revenue bar chart using normalized reported and
   derived quarters. Derivation metadata stays attached to each datum.
 - `get_insider_transactions` creates summary metrics over every match in the bounded scan and an

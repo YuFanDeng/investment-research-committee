@@ -38,11 +38,18 @@ const ChartSeriesSchema = z.object({
   color: z.string().optional(),
 });
 
+const ChartReferenceLineSchema = z.object({
+  value: z.number(),
+  label: z.string().optional(),
+  color: z.string().optional(),
+});
+
 export const LineChartContentBlockSchema = ContentBlockBaseSchema.extend({
   type: z.literal('line-chart'),
   xKey: z.string(),
   valueFormat: z.enum(['number', 'currency', 'percentage']).default('number'),
   series: z.array(ChartSeriesSchema).min(1),
+  referenceLines: z.array(ChartReferenceLineSchema).optional(),
   data: z.array(ChartDatumSchema),
 });
 
