@@ -13,6 +13,12 @@ The conversational agent reuses the same per-request SEC mode. Tool tests use in
 assert deterministic calculations, compact price-history output, source collection, and filing
 metadata without calling external services or Ollama.
 
+Quarterly fundamentals tests use synthetic Company Facts periods to verify that standalone quarters
+are separated from cumulative 10-Q facts, later comparative duplicates do not replace the original
+fiscal identity, Q4 is derived from annual minus nine-month revenue, and QoQ/YoY comparisons are
+calculated before the requested period limit is applied. The AAPL fixture also exercises the same
+quarterly selector used by the live client.
+
 Moving-average tests use synthetic, intentionally unsorted closes to verify chronological sorting,
 exact SMA values, above/below classification, insufficient-history behavior, supported-period
 validation, custom 120-session requests, duplicate normalization, and reuse of cached 365-day
@@ -26,9 +32,9 @@ The fixture is the raw SEC Company Facts response captured for Apple:
 packages/research/src/fixtures/sec/companyfacts/AAPL.json
 ```
 
-The fixture client parses that response through the same fundamentals-selection logic used by
-the live SEC client. It is labeled as a fixture source and records its capture timestamp in
-the graph source metadata.
+The fixture client parses that response through the same annual and quarterly
+fundamentals-selection logic used by the live SEC client. It is labeled as a fixture source and
+records its capture timestamp in the graph source metadata.
 
 The first fixture supports `AAPL` only. Other tickers must use Live SEC mode.
 

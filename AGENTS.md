@@ -2,7 +2,8 @@
 
 ## Human-friendly code is required
 
-This is a learning project. Write code that a frontend developer can read, trace, and explain in an interview.
+This is a learning project. Write code that a frontend developer can read, trace, and explain to
+another developer.
 
 - Prefer small, single-purpose modules and functions with specific domain names.
 - Keep UI components, API routes, LangGraph orchestration, and external-data clients separate.

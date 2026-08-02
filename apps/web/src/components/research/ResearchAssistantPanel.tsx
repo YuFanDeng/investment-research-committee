@@ -1,4 +1,4 @@
-import type { FormEvent } from 'react';
+import type { FormEvent, KeyboardEvent } from 'react';
 import { useState } from 'react';
 import { Bot, Check, Database, ExternalLink, LoaderCircle, Send, Sparkles } from 'lucide-react';
 
@@ -33,6 +33,10 @@ const FIXTURE_SUGGESTED_QUESTIONS = [
 
 function ToolActivity({ activity }: { activity: AssistantToolActivity }) {
   const Icon = activity.status === 'complete' ? Check : LoaderCircle;
+  const label =
+    activity.name === 'get_sec_fundamentals' && activity.args.period === 'quarterly'
+      ? 'Quarterly SEC fundamentals'
+      : (TOOL_LABELS[activity.name] ?? activity.name);
   const args = Object.entries(activity.args)
     .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : String(value)}`)
     .join(' · ');
@@ -43,7 +47,7 @@ function ToolActivity({ activity }: { activity: AssistantToolActivity }) {
         <Icon className={activity.status === 'running' ? 'spin' : undefined} size={14} />
       </span>
       <span>
-        <strong>{TOOL_LABELS[activity.name] ?? activity.name}</strong>
+        <strong>{label}</strong>
         <small>
           {args || (activity.status === 'running' ? 'Retrieving evidence' : 'Complete')}
         </small>
@@ -64,6 +68,22 @@ export function ResearchAssistantPanel({ secDataMode }: ResearchAssistantPanelPr
     const nextQuestion = question;
     setQuestion('');
     void askQuestion(nextQuestion);
+  }
+
+  function handleQuestionKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    const shouldSubmit =
+      event.key === 'Enter' &&
+      !event.shiftKey &&
+      !event.nativeEvent.isComposing &&
+      !isLoading &&
+      Boolean(question.trim());
+
+    if (!shouldSubmit) {
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
   }
 
   return (
@@ -156,16 +176,21 @@ export function ResearchAssistantPanel({ secDataMode }: ResearchAssistantPanelPr
           id="assistant-question"
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
+          onKeyDown={handleQuestionKeyDown}
           placeholder="Ask about a company, its filings, price trends, fundamentals, or valuation…"
           maxLength={1_000}
           disabled={isLoading}
+          aria-describedby="assistant-composer-help"
         />
         <button type="submit" disabled={isLoading || !question.trim()}>
           {isLoading ? <LoaderCircle className="spin" size={16} /> : <Send size={16} />}
           Ask agent
         </button>
       </form>
-      <p className="assistant-disclaimer">Educational research only · Not investment advice</p>
+      <div className="assistant-composer-footer">
+        <span id="assistant-composer-help">Enter to send · Shift + Enter for a new line</span>
+        <span>Educational research only · Not investment advice</span>
+      </div>
     </section>
   );
 }

@@ -24,4 +24,16 @@ describe('FixtureSecEdgarClient', () => {
     expect(result.filings[0].filingDate >= result.filings[1].filingDate).toBe(true);
     expect(result.filings.every((filing) => filing.source.url.includes('sec.gov'))).toBe(true);
   });
+
+  it('normalizes quarterly revenue from the checked-in Company Facts response', async () => {
+    const result = await new FixtureSecEdgarClient().getQuarterlyFundamentals('AAPL', 8);
+
+    expect(result.fundamentals).toHaveLength(8);
+    expect(result.fundamentals.every((quarter) => quarter.revenueUsd > 0)).toBe(true);
+    expect(
+      result.fundamentals.some(
+        (quarter) => quarter.derivation === 'derived_from_annual_and_nine_months',
+      ),
+    ).toBe(true);
+  });
 });

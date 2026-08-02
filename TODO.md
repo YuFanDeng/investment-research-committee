@@ -1,8 +1,7 @@
 # Project checklist
 
-The first interview-demo milestone is complete: a source-backed, multi-agent equity research
-workflow with local-model fallbacks, Massive market data, and live LangGraph progress in a
-React dashboard.
+The first product milestone is complete: a source-backed, multi-agent equity research workflow
+with local-model fallbacks, Massive market data, and live LangGraph progress in a React dashboard.
 
 ## Completed
 
@@ -22,11 +21,12 @@ React dashboard.
 - [x] Add a checkpointed human approval interrupt before final chair synthesis.
 - [x] Add a bounded conversational agent with visible read-only tool calls.
 - [x] Add deterministic 2–250-session moving averages with common 5, 10, 20, 50, 100, and 200 defaults.
+- [x] Extend SEC fundamentals with normalized quarterly revenue, QoQ/YoY changes, and transparent Q4 derivation.
 - [x] Add formatting, type checking, tests, and production build checks.
 
 ## Next milestones
 
-- [ ] Add screenshot examples and a short evaluation report for the interview demo.
+- [ ] Add screenshot examples and a short evaluation report for the project overview.
 - [ ] Add stronger analyst evaluation fixtures and regression tests for memo quality.
 - [ ] Add durable run history with a database and LangGraph checkpointer.
 - [ ] Add EMA, crossover, and chart-overlay technical analysis after the SMA tool is evaluated.

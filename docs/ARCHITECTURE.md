@@ -1,68 +1,68 @@
-# Interview Demo Architecture
+# System Architecture
 
-This diagram shows the two complementary LangGraph workflows behind the dashboard: a predictable
-investment committee and a conversational agent that selects read-only research tools.
+The dashboard exposes two complementary LangGraph architectures. They share the React, Hono,
+Ollama, SEC, Massive, and SSE boundaries, but they solve different interaction problems and are
+therefore documented separately.
+
+## Committee research workflow
+
+This graph favors predictable orchestration, progressive artifacts, and a human decision before
+publication.
 
 ```mermaid
 flowchart TB
-    User[Investor / interviewer] --> Web[React + Vite dashboard]
-    Web --> CommitteeUI[Committee research mode]
-    Web --> AgentUI[Agent chat mode]
-    CommitteeUI -->|SSE request| API[Hono API]
-    AgentUI -->|SSE request| API
-
-    subgraph Committee[Deterministic committee workflow]
-        direction TB
-        ResearchGraph[LangGraph research graph] --> Validate[Validate ticker]
-        Validate --> Evidence[Retrieve and normalize evidence]
-        Evidence --> Analysts[Parallel specialist analysts]
-        Analysts --> Fundamentals[Fundamentals]
-        Analysts --> Business[Business quality]
-        Analysts --> Valuation[Valuation]
-        Fundamentals --> Draft[Committee chair draft]
-        Business --> Draft
-        Valuation --> Draft
-        Draft --> Skeptic[Skeptic challenge]
-        Skeptic --> Approval{Human approval interrupt}
-        Approval -->|Approve or revise| Final[Final chair synthesis]
-        Approval -->|Reject| Rejected[End without publishing]
-    end
-
-    subgraph Assistant[Conversational tool-calling workflow]
-        direction TB
-        AgentGraph[LangGraph assistant graph] --> Model[Ollama resolves ticker and chooses a tool]
-        Model -->|Validated tool call| ToolNode[Bounded ToolNode loop]
-        ToolNode --> Catalog[Categorized tool catalog]
-        Catalog --> SecTools[SEC fundamentals and filings]
-        Catalog --> MarketTools[Snapshot and price history]
-        Catalog --> ValuationTools[Deterministic valuation metrics]
-        Catalog --> TechnicalTools[Deterministic moving averages]
-        SecTools --> ToolResult[Compact sourced tool result]
-        MarketTools --> ToolResult
-        ValuationTools --> ToolResult
-        TechnicalTools --> ToolResult
-        ToolResult -->|ToolMessage| Model
-        Model -->|No tool call| Answer[Source-backed answer]
-    end
-
-    API -->|POST /research/stream| ResearchGraph
-    API -->|POST /assistant/stream| AgentGraph
-
+    User[Investor] --> UI[Committee research UI]
+    UI -->|POST /research/stream| API[Hono API]
+    API --> Graph[LangGraph committee graph]
+    Graph --> Validate[Validate ticker]
+    Validate --> Evidence[Retrieve and normalize evidence]
     SEC[(SEC EDGAR)] --> Evidence
     Massive[(Massive market data)] --> Evidence
-    SEC --> SecTools
-    Massive --> MarketTools
+    Evidence --> Analysts[Parallel specialist analysts]
+    Ollama[(Local Ollama)] -. structured generation .-> Analysts
+    Analysts --> Fundamentals[Fundamentals]
+    Analysts --> Business[Business quality]
+    Analysts --> Valuation[Valuation]
+    Fundamentals --> Draft[Chair draft]
+    Business --> Draft
+    Valuation --> Draft
+    Draft --> Skeptic[Skeptic challenge]
+    Skeptic --> Approval{Human approval interrupt}
+    Approval -->|Approve or revise| Final[Final synthesis]
+    Approval -->|Reject| Rejected[End without publishing]
+    Final --> Events[Lifecycle and artifact events]
+    Events -. SSE .-> UI
+```
+
+## Agent chat workflow
+
+This graph favors model-directed tool selection for focused questions while keeping the available
+actions validated, read-only, and bounded.
+
+```mermaid
+flowchart TB
+    User[Investor] --> UI[Agent Chat UI]
+    UI -->|POST /assistant/stream| API[Hono API]
+    API --> Graph[LangGraph assistant graph]
+    Graph --> Model[Ollama resolves company and chooses a tool]
+    Model -->|Validated tool call| ToolNode[Bounded ToolNode loop]
+    ToolNode --> Catalog[Categorized tool catalog]
+    Catalog --> SECtools[SEC fundamentals and filings]
+    Catalog --> MarketTools[Market snapshot and history]
+    Catalog --> ValuationTools[Valuation metrics]
+    Catalog --> TechnicalTools[Moving averages]
+    SEC[(SEC EDGAR)] --> SECtools
+    Massive[(Massive market data)] --> MarketTools
     SEC --> ValuationTools
     Massive --> ValuationTools
     Massive --> TechnicalTools
-    Ollama[(Local Ollama model)] -. structured generation .-> Analysts
-    Ollama -. tool selection and response .-> Model
-
-    Final --> ResearchEvents[Research lifecycle and artifact events]
-    ResearchEvents -. SSE .-> API
-    Answer -. SSE tool activity and answer .-> API
-    API -. lifecycle and artifact updates .-> CommitteeUI
-    API -. tool activity and answers .-> AgentUI
+    SECtools --> Result[Compact sourced result]
+    MarketTools --> Result
+    ValuationTools --> Result
+    TechnicalTools --> Result
+    Result -->|ToolMessage| Model
+    Model -->|No tool call| Answer[Source-backed answer]
+    Answer -. SSE .-> UI
 ```
 
 ## Demo talking points

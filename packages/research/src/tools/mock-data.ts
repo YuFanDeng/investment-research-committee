@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import type { CompanyFactsResponse, SecFiling } from './sec-edgar.js';
 import { SecEdgarError, selectFundamentals } from './sec-edgar.js';
+import { selectQuarterlyRevenue } from './sec-quarterly.js';
 
 const AAPL_FIXTURE_TICKER = 'AAPL';
 const AAPL_FIXTURE_RETRIEVED_AT = '2026-07-23T00:00:00.000Z';
@@ -34,6 +35,22 @@ export class FixtureSecEdgarClient {
     return {
       companyName: response.entityName ?? 'Apple Inc.',
       fundamentals: selectFundamentals(response),
+      source: {
+        id: 'fixture-sec-company-facts-aapl',
+        title: 'Apple Inc. — SEC EDGAR Company Facts (fixture)',
+        url: AAPL_COMPANY_FACTS_URL,
+        sourceType: 'sec_filing' as const,
+        retrievedAt: AAPL_FIXTURE_RETRIEVED_AT,
+      },
+    };
+  }
+
+  async getQuarterlyFundamentals(ticker: string, periods = 8) {
+    const response = await this.loadCompanyFacts(ticker);
+
+    return {
+      companyName: response.entityName ?? 'Apple Inc.',
+      fundamentals: selectQuarterlyRevenue(response, periods),
       source: {
         id: 'fixture-sec-company-facts-aapl',
         title: 'Apple Inc. — SEC EDGAR Company Facts (fixture)',

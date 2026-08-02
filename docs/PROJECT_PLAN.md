@@ -107,7 +107,7 @@ Use React + Vite for a focused interface with:
 - A **Challenge this thesis** action that asks the critic a user-supplied question.
 - Human approve/reject controls at the review checkpoint.
 
-## Phase 7 — Package it for interviews
+## Phase 7 — Package it for public use
 
 The repository should include:
 
@@ -120,6 +120,6 @@ The repository should include:
 
 Suggested build order: data tools → one end-to-end graph → structured outputs → critic/verifier → checkpointing → UI → evaluations.
 
-## Interview framing
+## Project summary
 
 > I built a stateful, multi-agent equity-research workflow. Specialized agents collect and analyze different evidence; LangGraph coordinates parallel execution, critique, quality gates, and human approval. The final output is auditable because every key factual claim is tied to evidence.

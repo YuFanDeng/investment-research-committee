@@ -21,7 +21,8 @@ export {
   buildChairMessages,
 } from './prompts/committee.js';
 export { SecEdgarClient, SecEdgarError } from './tools/sec-edgar.js';
-export type { RecentSecFilings, SecFiling } from './tools/sec-edgar.js';
+export type { RecentSecFilings, SecFiling, SecQuarterlyFundamentals } from './tools/sec-edgar.js';
+export type { QuarterlyRevenue } from './tools/sec-quarterly.js';
 export { MassiveClient, MassiveError } from './tools/massive.js';
 export {
   calculateSimpleMovingAverages,

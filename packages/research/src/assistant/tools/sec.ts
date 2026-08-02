@@ -7,12 +7,17 @@ import type { ResearchToolContext } from './context.js';
 
 export function createSecResearchTools(context: ResearchToolContext) {
   const getSecFundamentals = tool(
-    async ({ ticker }) => {
-      const result = await context.getFundamentals(ticker);
+    async ({ ticker, period, periods }) => {
+      const requestedPeriods = periods ?? 8;
+      const result =
+        period === 'quarterly'
+          ? await context.getQuarterlyFundamentals(ticker, requestedPeriods)
+          : await context.getFundamentals(ticker);
       context.collectSource(result.source);
       return JSON.stringify({
         ticker,
         companyName: result.companyName,
+        period,
         fundamentals: result.fundamentals,
         sourceIds: [result.source.id],
       });
@@ -20,8 +25,12 @@ export function createSecResearchTools(context: ResearchToolContext) {
     {
       name: 'get_sec_fundamentals',
       description:
-        'Get a company’s latest complete annual SEC revenue, net income, and operating cash flow. Resolve the company in the question to its U.S. ticker.',
-      schema: z.object({ ticker: AssistantTickerSchema }),
+        'Get SEC fundamentals for a company. Use period="annual" for the latest annual revenue, net income, and operating cash flow. Use period="quarterly" for a quarterly revenue trend; periods controls how many quarters are returned (two years is 8). Resolve the company in the question to its U.S. ticker.',
+      schema: z.object({
+        ticker: AssistantTickerSchema,
+        period: z.enum(['annual', 'quarterly']).default('annual'),
+        periods: z.number().int().min(1).max(12).optional(),
+      }),
     },
   );
 

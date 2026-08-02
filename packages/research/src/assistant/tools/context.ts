@@ -2,7 +2,10 @@ import type { Source } from '../../schemas.js';
 import type { MassiveClient } from '../../tools/massive.js';
 import type { SecEdgarClient } from '../../tools/sec-edgar.js';
 
-export type SecToolClient = Pick<SecEdgarClient, 'getFundamentals' | 'getRecentFilings'>;
+export type SecToolClient = Pick<
+  SecEdgarClient,
+  'getFundamentals' | 'getQuarterlyFundamentals' | 'getRecentFilings'
+>;
 export type MarketToolClient = Pick<MassiveClient, 'getMarketSnapshot' | 'getPriceHistory'>;
 
 export type CreateResearchToolContextOptions = {
@@ -13,6 +16,10 @@ export type CreateResearchToolContextOptions = {
 export function createResearchToolContext(options: CreateResearchToolContextOptions) {
   const sources = new Map<string, Source>();
   const fundamentalsByTicker = new Map<string, ReturnType<SecToolClient['getFundamentals']>>();
+  const quarterlyFundamentalsByTickerAndPeriods = new Map<
+    string,
+    ReturnType<SecToolClient['getQuarterlyFundamentals']>
+  >();
   const marketSnapshotsByTicker = new Map<
     string,
     ReturnType<MarketToolClient['getMarketSnapshot']>
@@ -35,6 +42,16 @@ export function createResearchToolContext(options: CreateResearchToolContextOpti
 
       const request = options.secClient.getFundamentals(normalizedTicker);
       fundamentalsByTicker.set(normalizedTicker, request);
+      return request;
+    },
+    getQuarterlyFundamentals(ticker: string, periods: number) {
+      const normalizedTicker = ticker.toUpperCase();
+      const cacheKey = `${normalizedTicker}:${periods}`;
+      const existingRequest = quarterlyFundamentalsByTickerAndPeriods.get(cacheKey);
+      if (existingRequest) return existingRequest;
+
+      const request = options.secClient.getQuarterlyFundamentals(normalizedTicker, periods);
+      quarterlyFundamentalsByTickerAndPeriods.set(cacheKey, request);
       return request;
     },
     getMarketSnapshot(ticker: string) {

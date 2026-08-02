@@ -15,7 +15,7 @@ This document records the design decisions for the research workspace redesign.
 
 | Area                   | Decision                                                                    | Rationale                                                                                                                                |
 | ---------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| Visual direction       | Light modern research workspace with elevated white cards                   | Keeps dense financial information approachable while preserving a polished interview-demo surface.                                       |
+| Visual direction       | Light modern research workspace with elevated white cards                   | Keeps dense financial information approachable while preserving a polished product surface.                                              |
 | Workflow visualization | Sticky vertical node timeline grouped into four named phases                | Ten stages remain readable without competing for horizontal space, and the active stage stays visible while results stream in.           |
 | Price visualization    | Recharts line chart using the historical closes already returned by Massive | Shows real market context without inventing data or adding a second market-data request.                                                 |
 | Icons                  | `lucide-react`                                                              | Consistent, accessible SVG icons for status, evidence, market, and analyst cards.                                                        |
@@ -69,6 +69,8 @@ ApplicationShell
 - Fixture/live SEC mode remains available only in development and is visually secondary to the conversation.
 - Conversational tool calls show readable names, validated arguments, and completion state without
   exposing raw tool payloads.
+- The Agent Chat composer sends on Enter, preserves multiline input with Shift + Enter, and does
+  not intercept Enter while an input method editor is composing text.
 - The active mode uses text, iconography, and `aria-current`; switching modes preserves local state.
 
 ## Scope boundary

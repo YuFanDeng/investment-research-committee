@@ -1,6 +1,8 @@
 import { type Fundamentals, type Source } from '../schemas.js';
 import { z } from 'zod';
 
+import { selectQuarterlyRevenue, type QuarterlyRevenue } from './sec-quarterly.js';
+
 const SEC_TICKERS_URL = 'https://www.sec.gov/files/company_tickers.json';
 const SEC_COMPANY_FACTS_URL = 'https://data.sec.gov/api/xbrl/companyfacts';
 const SEC_SUBMISSIONS_URL = 'https://data.sec.gov/submissions';
@@ -17,7 +19,7 @@ export type CompanyFactsResponse = {
   facts?: Record<string, Record<string, { units?: Record<string, SecFact[]> }>>;
 };
 
-type SecFact = {
+export type SecFact = {
   accn?: string;
   end?: string;
   filed?: string;
@@ -46,6 +48,12 @@ type AnnualFact = Required<Pick<SecFact, 'end' | 'filed' | 'start' | 'val'>>;
 export type SecFundamentals = {
   companyName: string;
   fundamentals: Fundamentals;
+  source: Source;
+};
+
+export type SecQuarterlyFundamentals = {
+  companyName: string;
+  fundamentals: QuarterlyRevenue[];
   source: Source;
 };
 
@@ -217,6 +225,28 @@ export class SecEdgarClient {
     return {
       companyName: response.entityName ?? company.title,
       fundamentals: selectFundamentals(response),
+      source: {
+        id: `sec-company-facts-${cik}`,
+        title: `${response.entityName ?? company.title} — SEC EDGAR Company Facts`,
+        url: sourceUrl,
+        sourceType: 'sec_filing',
+        retrievedAt: new Date().toISOString(),
+      },
+    };
+  }
+
+  async getQuarterlyFundamentals(ticker: string, periods = 8): Promise<SecQuarterlyFundamentals> {
+    const company = await this.resolveCompany(ticker);
+    const cik = company.cik;
+    const sourceUrl = `${SEC_COMPANY_FACTS_URL}/CIK${cik}.json`;
+    const response = await this.requestJson(sourceUrl);
+
+    if (!isCompanyFactsResponse(response))
+      throw new SecEdgarError('SEC EDGAR returned an invalid Company Facts response.');
+
+    return {
+      companyName: response.entityName ?? company.title,
+      fundamentals: selectQuarterlyRevenue(response, periods),
       source: {
         id: `sec-company-facts-${cik}`,
         title: `${response.entityName ?? company.title} — SEC EDGAR Company Facts`,

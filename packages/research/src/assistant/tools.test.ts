@@ -31,6 +31,18 @@ function createToolkit(onPriceHistoryRequest: () => void = () => undefined) {
         },
         source: secSource,
       }),
+      getQuarterlyFundamentals: async (_ticker, periods = 8) => ({
+        companyName: 'Test Company',
+        fundamentals: Array.from({ length: periods }, (_, index) => ({
+          fiscalYear: 2025,
+          fiscalQuarter: `Q${(index % 4) + 1}` as 'Q1' | 'Q2' | 'Q3' | 'Q4',
+          periodStart: `2025-0${index + 1}-01`,
+          periodEnd: `2025-0${index + 1}-28`,
+          revenueUsd: 200 + index,
+          derivation: 'reported' as const,
+        })),
+        source: secSource,
+      }),
       getRecentFilings: async () => ({ companyName: 'Test Company', filings: [] }),
     },
     marketClient: {
@@ -100,6 +112,19 @@ describe('research assistant tools', () => {
     );
 
     await expect(fundamentalsTool!.invoke({ ticker: 'Apple Inc.' })).rejects.toThrow();
+  });
+
+  it('returns quarterly revenue through the existing SEC fundamentals tool', async () => {
+    const fundamentalsTool = createToolkit().tools.find(
+      (candidate) => candidate.name === 'get_sec_fundamentals',
+    );
+
+    const result = JSON.parse(
+      String(await fundamentalsTool!.invoke({ ticker: 'TEST', period: 'quarterly', periods: 8 })),
+    ) as { period: string; fundamentals: unknown[] };
+
+    expect(result.period).toBe('quarterly');
+    expect(result.fundamentals).toHaveLength(8);
   });
 
   it('reuses cached 365-day history across market and technical tools', async () => {
