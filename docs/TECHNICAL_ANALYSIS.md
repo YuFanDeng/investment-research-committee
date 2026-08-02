@@ -40,8 +40,10 @@ calculate_moving_averages({
 - Each available result includes value, latest-price distance, and `above`, `below`, or `equal`.
 - Insufficient history is explicit rather than replaced with a partial-period calculation.
 
-The price chart renders the complete close and average series. Each series has an accessible toggle
-so users can isolate a specific average without making another provider request.
+The price chart renders the complete close and average series. When SMA and EMA are requested
+together, the chart defaults to a focused SMA view and offers `SMA`, `EMA`, and opt-in `Compare
+all` controls. Each visible series also has an accessible toggle, so users can isolate one period
+without making another provider request.
 
 ## RSI
 
@@ -89,8 +91,21 @@ Lower = middle - multiplier × population standard deviation
 ```
 
 The compact result includes the three bands, band width as a percentage of the middle band,
-percent-B, and whether the latest close is above, below, or within the bands. The bands merge into
-the existing price chart when other price overlays were requested.
+percent-B, and whether the latest close is above, below, or within the bands. Bollinger Bands use a
+separate volatility chart so their price envelope does not overload the moving-average trend chart.
+
+## Presentation structure
+
+Broad technical-analysis answers use a short model-written overall takeaway followed by typed UI
+sections in a fixed order:
+
+1. **Trend** — moving-average charts and their latest deterministic context.
+2. **Momentum** — RSI and MACD charts.
+3. **Volatility** — Bollinger Bands and their latest price position.
+
+Each technical chart declares its domain in the shared content contract. React groups by that
+metadata instead of parsing model-generated Markdown headings, so chart placement remains stable
+when wording changes or another indicator is added.
 
 ## Shared guardrails
 

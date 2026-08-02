@@ -34,17 +34,19 @@ through `@investment-research/research/assistant-content`.
 | `metric-grid` | Insider transaction summary            | Four compact summary metrics        |
 | `data-table`  | Insider transaction details            | Expandable, horizontally safe table |
 
-Every non-Markdown block has a stable ID, title, optional description, and source IDs. Chart and
-table values are restricted to JSON primitives. The API validates the complete envelope before it
-crosses the SSE boundary.
+Every non-Markdown block has a stable ID, title, optional description, and source IDs. Technical
+charts may also declare a `technicalDomain` and named `seriesGroups`. Chart and table values are
+restricted to JSON primitives. The API validates the complete envelope before it crosses the SSE
+boundary.
 
 ## Deterministic producers
 
 - `get_price_history` collects a line chart containing the complete adjusted daily-close series.
   Its compact tool result sent to the model remains unchanged.
-- Technical tools calculate SMA, EMA, RSI, MACD, and Bollinger series in TypeScript. Price-based
-  overlays merge by stable block ID, while RSI and MACD use separate scaled charts. Interactive
-  controls can hide or restore any line without another provider request.
+- Technical tools calculate SMA, EMA, RSI, MACD, and Bollinger series in TypeScript. SMA and EMA
+  share a trend chart with focused family controls, while RSI, MACD, and Bollinger Bands use
+  separate charts suited to their domains. Interactive controls can hide or restore any visible
+  line without another provider request.
 - Quarterly `get_sec_fundamentals` creates a revenue bar chart using normalized reported and
   derived quarters. Derivation metadata stays attached to each datum.
 - `get_insider_transactions` creates summary metrics over every match in the bounded scan and an
@@ -55,6 +57,10 @@ crosses the SSE boundary.
 `AssistantContent` validates each block independently and dispatches known types through a small
 component registry. This keeps the chat panel independent from visualization details. A newer or
 malformed block does not break the response: the UI renders it as expandable formatted JSON.
+
+Technical blocks are grouped into Trend, Momentum, and Volatility sections from validated domain
+metadata. The model's Markdown remains an overall takeaway; the UI never tries to infer chart
+placement by parsing headings or prose.
 
 Markdown is rendered with `react-markdown` and `remark-gfm`. Raw HTML is not enabled. Known source
 tokens become labeled external links, while the existing source chips remain available below the

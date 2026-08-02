@@ -13,6 +13,7 @@ export {
   ASSISTANT_CONTENT_VERSION,
   AssistantContentBlockSchema,
   AssistantContentEnvelopeSchema,
+  TechnicalDomainSchema,
 } from './assistant/content-blocks.js';
 export type {
   AssistantContentBlock,
@@ -21,6 +22,7 @@ export type {
   DataTableContentBlock,
   LineChartContentBlock,
   MetricGridContentBlock,
+  TechnicalDomain,
 } from './assistant/content-blocks.js';
 export type {
   AssistantConversationMessage,

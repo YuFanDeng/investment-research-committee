@@ -30,6 +30,18 @@ function axisDate(value: unknown) {
 
 export function AgentLineChart({ block }: { block: LineChartContentBlock }) {
   const [hiddenSeries, setHiddenSeries] = useState<string[]>([]);
+  const [activeGroupKey, setActiveGroupKey] = useState(
+    block.defaultSeriesGroup ?? block.seriesGroups?.[0]?.key,
+  );
+  const activeGroup = block.seriesGroups?.find((group) => group.key === activeGroupKey);
+  const availableSeries = activeGroup
+    ? block.series.filter((series) => activeGroup.seriesKeys.includes(series.key))
+    : block.series;
+
+  function selectGroup(groupKey: string) {
+    setActiveGroupKey(groupKey);
+    setHiddenSeries([]);
+  }
 
   function toggleSeries(seriesKey: string) {
     setHiddenSeries((current) =>
@@ -47,9 +59,24 @@ export function AgentLineChart({ block }: { block: LineChartContentBlock }) {
           {block.description ? <p>{block.description}</p> : null}
         </div>
       </div>
-      {block.series.length > 1 ? (
+      {block.seriesGroups ? (
+        <div className="assistant-series-groups" aria-label={`${block.title} indicator family`}>
+          {block.seriesGroups.map((group) => (
+            <button
+              type="button"
+              key={group.key}
+              className={group.key === activeGroupKey ? 'is-active' : undefined}
+              aria-pressed={group.key === activeGroupKey}
+              onClick={() => selectGroup(group.key)}
+            >
+              {group.label}
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {availableSeries.length > 1 ? (
         <div className="assistant-series-controls" aria-label={`${block.title} visible series`}>
-          {block.series.map((series) => {
+          {availableSeries.map((series) => {
             const isVisible = !hiddenSeries.includes(series.key);
             return (
               <button
@@ -114,7 +141,7 @@ export function AgentLineChart({ block }: { block: LineChartContentBlock }) {
                 strokeDasharray="4 4"
               />
             ))}
-            {block.series.map((series) => (
+            {availableSeries.map((series) => (
               <Line
                 key={series.key}
                 type="monotone"

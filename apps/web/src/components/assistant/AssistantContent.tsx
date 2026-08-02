@@ -20,6 +20,29 @@ function ChartLoadingState() {
 }
 
 type KnownBlock = ReturnType<typeof AssistantContentBlockSchema.parse>;
+type TechnicalDomain = NonNullable<Extract<KnownBlock, { type: 'line-chart' }>['technicalDomain']>;
+
+const TECHNICAL_SECTIONS: Array<{
+  domain: TechnicalDomain;
+  title: string;
+  description: string;
+}> = [
+  {
+    domain: 'trend',
+    title: 'Trend',
+    description: 'Price direction viewed through smoothed closing-price averages.',
+  },
+  {
+    domain: 'momentum',
+    title: 'Momentum',
+    description: 'The strength and direction of recent closing-price movement.',
+  },
+  {
+    domain: 'volatility',
+    title: 'Volatility',
+    description: 'How widely the closing price is moving around its recent trend.',
+  },
+];
 
 const CONTENT_BLOCK_RENDERERS = {
   markdown: (block: Extract<KnownBlock, { type: 'markdown' }>, sources: Source[]) => (
@@ -58,6 +81,10 @@ function renderContentBlock(block: KnownBlock, sources: Source[]) {
   }
 }
 
+function blockKey(block: KnownBlock, index: number) {
+  return `${block.id}-${index}`;
+}
+
 type AssistantContentProps = {
   fallbackMarkdown: string;
   presentation?: AssistantPresentation;
@@ -73,16 +100,50 @@ export function AssistantContent({
     ? presentation.blocks
     : [{ type: 'markdown', id: 'legacy-answer', content: fallbackMarkdown }];
 
+  const parsedBlocks = blocks.map((candidate) => AssistantContentBlockSchema.safeParse(candidate));
+  const technicalBlocks = parsedBlocks.flatMap((parsed) =>
+    parsed.success && parsed.data.type !== 'markdown' && parsed.data.technicalDomain
+      ? [parsed.data]
+      : [],
+  );
+
   return (
     <div className="assistant-content" data-content-version={presentation?.version ?? 1}>
-      {blocks.map((candidate, index) => {
-        const parsed = AssistantContentBlockSchema.safeParse(candidate);
+      {parsedBlocks.map((parsed, index) => {
         if (!parsed.success) {
-          return <UnknownContentBlock block={candidate} key={`unknown-${index}`} />;
+          return <UnknownContentBlock block={blocks[index]} key={`unknown-${index}`} />;
         }
+        if (parsed.data.type !== 'markdown' && parsed.data.technicalDomain) return null;
 
-        return <div key={parsed.data.id}>{renderContentBlock(parsed.data, sources)}</div>;
+        return (
+          <div key={blockKey(parsed.data, index)}>{renderContentBlock(parsed.data, sources)}</div>
+        );
       })}
+      {technicalBlocks.length ? (
+        <div className="assistant-technical-analysis" aria-label="Technical analysis details">
+          {TECHNICAL_SECTIONS.map((section) => {
+            const sectionBlocks = technicalBlocks.filter(
+              (block) => block.technicalDomain === section.domain,
+            );
+            if (!sectionBlocks.length) return null;
+
+            return (
+              <section className="assistant-technical-section" key={section.domain}>
+                <header>
+                  <span>{section.domain}</span>
+                  <h2>{section.title}</h2>
+                  <p>{section.description}</p>
+                </header>
+                <div className="assistant-technical-blocks">
+                  {sectionBlocks.map((block, index) => (
+                    <div key={blockKey(block, index)}>{renderContentBlock(block, sources)}</div>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      ) : null}
     </div>
   );
 }

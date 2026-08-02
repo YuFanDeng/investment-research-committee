@@ -2,7 +2,7 @@ import type { MarketBar } from '../schemas.js';
 import { bollingerBandSeries } from '../technical/bollinger-bands.js';
 import { exponentialMovingAverageSeries } from '../technical/exponential-moving-average.js';
 import { chronologicalBars, roundIndicator } from '../technical/indicator-utils.js';
-import { macdSeries, type MacdSettings } from '../technical/macd.js';
+import { macdSeries, type MacdPoint, type MacdSettings } from '../technical/macd.js';
 import { relativeStrengthIndexSeries } from '../technical/relative-strength-index.js';
 import type { LineChartContentBlock } from './content-blocks.js';
 
@@ -17,6 +17,67 @@ const TECHNICAL_COLORS = [
   '#0284c7',
   '#db2777',
 ];
+
+function movingAverageGroups(averageTypes: MovingAverageType[], seriesKeys: string[]) {
+  if (averageTypes.length < 2) return undefined;
+
+  return [
+    {
+      key: 'sma',
+      label: 'SMA',
+      seriesKeys: ['close', ...seriesKeys.filter((key) => key.startsWith('sma'))],
+    },
+    {
+      key: 'ema',
+      label: 'EMA',
+      seriesKeys: ['close', ...seriesKeys.filter((key) => key.startsWith('ema'))],
+    },
+    { key: 'compare', label: 'Compare all', seriesKeys: ['close', ...seriesKeys] },
+  ];
+}
+
+function latestAvailableValue(values: Array<number | null>) {
+  for (let index = values.length - 1; index >= 0; index -= 1) {
+    const value = values[index];
+    if (value !== null) return value;
+  }
+  return undefined;
+}
+
+function latestCompleteMacdPoint(points: MacdPoint[]) {
+  for (let index = points.length - 1; index >= 0; index -= 1) {
+    const point = points[index];
+    if (point.macd !== null && point.signal !== null && point.histogram !== null) {
+      return { macd: point.macd, signal: point.signal, histogram: point.histogram };
+    }
+  }
+  return undefined;
+}
+
+function macdDescription(settings: MacdSettings, latestPoint?: { macd: number; signal: number }) {
+  const settingsLabel = `${settings.fastPeriod}/${settings.slowPeriod}/${settings.signalPeriod}`;
+  if (!latestPoint) return `Not enough price history for ${settingsLabel} MACD`;
+
+  const signalPosition =
+    latestPoint.macd > latestPoint.signal
+      ? 'above'
+      : latestPoint.macd < latestPoint.signal
+        ? 'below'
+        : 'at';
+  return `${settingsLabel} MACD is ${signalPosition} its signal line`;
+}
+
+function bollingerPosition(
+  close: number | undefined,
+  bands: { upper: number | null; lower: number | null } | undefined,
+) {
+  if (close === undefined || bands?.upper === null || bands?.lower === null || !bands) {
+    return undefined;
+  }
+  if (close > bands.upper) return 'above the upper band';
+  if (close < bands.lower) return 'below the lower band';
+  return 'within the bands';
+}
 
 function simpleMovingAverageSeries(values: number[], period: number) {
   let rollingTotal = 0;
@@ -48,13 +109,16 @@ export function createMovingAverageBlock(
             ),
     })),
   );
+  const averageKeys = averages.map((average) => average.key);
+  const seriesGroups = movingAverageGroups(averageTypes, averageKeys);
 
   return {
     type: 'line-chart',
     id: `price-history-${ticker}`,
     title: `${ticker} price and moving averages`,
-    description: 'Adjusted daily closes with deterministic moving-average overlays',
+    description: `${periods.join(', ')}-session ${averageTypes.map((type) => type.toUpperCase()).join(' and ')} trend overlays on adjusted closes`,
     sourceIds: [sourceId],
+    technicalDomain: 'trend',
     xKey: 'date',
     valueFormat: 'currency',
     series: [
@@ -65,6 +129,8 @@ export function createMovingAverageBlock(
         color: TECHNICAL_COLORS[(index + 1) % TECHNICAL_COLORS.length],
       })),
     ],
+    seriesGroups,
+    defaultSeriesGroup: seriesGroups?.[0].key,
     data: bars.map((bar, index) => ({
       date: bar.date,
       close: bar.close,
@@ -86,12 +152,17 @@ export function createRsiBlock(
     bars.map((bar) => bar.close),
     period,
   );
+  const latestValue = latestAvailableValue(values);
   return {
     type: 'line-chart',
     id: `rsi-${ticker}-${period}`,
     title: `${ticker} ${period}-day RSI`,
-    description: 'Wilder-smoothed relative strength index with conventional reference levels',
+    description:
+      latestValue === undefined
+        ? 'Not enough price history to calculate this RSI period'
+        : `Latest RSI is ${latestValue}; 30 and 70 are conventional context levels`,
     sourceIds: [sourceId],
+    technicalDomain: 'momentum',
     xKey: 'date',
     valueFormat: 'number',
     referenceLines: [
@@ -114,12 +185,14 @@ export function createMacdBlock(
     bars.map((bar) => bar.close),
     settings,
   );
+  const latestPoint = latestCompleteMacdPoint(points);
   return {
     type: 'line-chart',
     id: `macd-${ticker}-${settings.fastPeriod}-${settings.slowPeriod}-${settings.signalPeriod}`,
     title: `${ticker} MACD`,
-    description: `${settings.fastPeriod}/${settings.slowPeriod}/${settings.signalPeriod} MACD, signal, and histogram series`,
+    description: macdDescription(settings, latestPoint),
     sourceIds: [sourceId],
+    technicalDomain: 'momentum',
     xKey: 'date',
     valueFormat: 'number',
     referenceLines: [{ value: 0, label: 'Zero', color: '#94a3b8' }],
@@ -145,12 +218,18 @@ export function createBollingerBandBlock(
     period,
     standardDeviations,
   );
+  const latestBar = bars.at(-1);
+  const latestBands = bands.at(-1);
+  const latestPosition = bollingerPosition(latestBar?.close, latestBands);
   return {
     type: 'line-chart',
-    id: `price-history-${ticker}`,
+    id: `bollinger-${ticker}-${period}-${standardDeviations}`,
     title: `${ticker} price and Bollinger Bands`,
-    description: `${period}-session SMA with ±${standardDeviations} population standard deviations`,
+    description: latestPosition
+      ? `Latest close is ${latestPosition}; bands use a ${period}-session SMA and ±${standardDeviations} standard deviations`
+      : `Not enough price history for ${period}-session Bollinger Bands`,
     sourceIds: [sourceId],
+    technicalDomain: 'volatility',
     xKey: 'date',
     valueFormat: 'currency',
     series: [

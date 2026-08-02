@@ -4,12 +4,14 @@ export const ASSISTANT_CONTENT_VERSION = 1 as const;
 
 const ContentValueSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
 const ChartDatumSchema = z.record(ContentValueSchema);
+export const TechnicalDomainSchema = z.enum(['trend', 'momentum', 'volatility']);
 
 const ContentBlockBaseSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
   description: z.string().optional(),
   sourceIds: z.array(z.string()).default([]),
+  technicalDomain: TechnicalDomainSchema.optional(),
 });
 
 export const MarkdownContentBlockSchema = z.object({
@@ -38,6 +40,12 @@ const ChartSeriesSchema = z.object({
   color: z.string().optional(),
 });
 
+const ChartSeriesGroupSchema = z.object({
+  key: z.string().min(1),
+  label: z.string().min(1),
+  seriesKeys: z.array(z.string().min(1)).min(1),
+});
+
 const ChartReferenceLineSchema = z.object({
   value: z.number(),
   label: z.string().optional(),
@@ -49,6 +57,8 @@ export const LineChartContentBlockSchema = ContentBlockBaseSchema.extend({
   xKey: z.string(),
   valueFormat: z.enum(['number', 'currency', 'percentage']).default('number'),
   series: z.array(ChartSeriesSchema).min(1),
+  seriesGroups: z.array(ChartSeriesGroupSchema).min(2).optional(),
+  defaultSeriesGroup: z.string().min(1).optional(),
   referenceLines: z.array(ChartReferenceLineSchema).optional(),
   data: z.array(ChartDatumSchema),
 });
@@ -95,3 +105,4 @@ export type LineChartContentBlock = z.infer<typeof LineChartContentBlockSchema>;
 export type BarChartContentBlock = z.infer<typeof BarChartContentBlockSchema>;
 export type DataTableContentBlock = z.infer<typeof DataTableContentBlockSchema>;
 export type MetricGridContentBlock = z.infer<typeof MetricGridContentBlockSchema>;
+export type TechnicalDomain = z.infer<typeof TechnicalDomainSchema>;

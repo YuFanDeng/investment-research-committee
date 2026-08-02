@@ -273,6 +273,7 @@ describe('research assistant tools', () => {
       'price-history-TEST',
       'rsi-TEST-14',
       'macd-TEST-12-26-9',
+      'bollinger-TEST-20-2',
     ]);
   });
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createPriceHistoryBlock, mergeContentBlock } from './content-block-builders.js';
 import { ASSISTANT_CONTENT_VERSION, AssistantContentEnvelopeSchema } from './content-blocks.js';
-import { createMovingAverageBlock } from './technical-content-blocks.js';
+import { createBollingerBandBlock, createMovingAverageBlock } from './technical-content-blocks.js';
 
 describe('assistant content contract', () => {
   it('validates a versioned mixture of narrative and visualization blocks', () => {
@@ -56,7 +56,40 @@ describe('assistant content contract', () => {
     expect(merged).toMatchObject({
       type: 'line-chart',
       title: 'TEST price and moving averages',
+      technicalDomain: 'trend',
       series: [{ key: 'close' }, { key: 'sma2' }],
+    });
+  });
+
+  it('offers focused SMA and EMA views without hiding the opt-in comparison', () => {
+    const bars = [
+      { date: '2026-07-01', close: 10 },
+      { date: '2026-07-02', close: 12 },
+      { date: '2026-07-03', close: 14 },
+    ];
+    const block = createMovingAverageBlock('TEST', bars, [2], ['sma', 'ema'], 'market-test');
+
+    expect(block).toMatchObject({
+      defaultSeriesGroup: 'sma',
+      seriesGroups: [
+        { key: 'sma', seriesKeys: ['close', 'sma2'] },
+        { key: 'ema', seriesKeys: ['close', 'ema2'] },
+        { key: 'compare', seriesKeys: ['close', 'sma2', 'ema2'] },
+      ],
+    });
+  });
+
+  it('keeps Bollinger Bands in a separate volatility chart', () => {
+    const bars = [
+      { date: '2026-07-01', close: 10 },
+      { date: '2026-07-02', close: 12 },
+      { date: '2026-07-03', close: 14 },
+    ];
+    const block = createBollingerBandBlock('TEST', bars, 2, 2, 'market-test');
+
+    expect(block).toMatchObject({
+      id: 'bollinger-TEST-2-2',
+      technicalDomain: 'volatility',
     });
   });
 });
